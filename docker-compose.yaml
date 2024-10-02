@@ -1,0 +1,27 @@
+version: "3.5"
+services:
+
+  nats:
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    image: nats
+    command: "-js"
+    volumes:
+      - nats-data:/data
+
+  matchmaker:
+    image: matchmaker:latest
+    command: --app-name spacepit_server --app-version v0.0.1
+    depends_on:
+      - nats
+    build:
+      context: .
+      dockerfile: ./bevygap_matchmaker/Dockerfile
+    environment:
+      - NATS_URL=nats://nats:4222
+    env_file:
+      - .matchmaker.env
+
+volumes:
+  nats-data:
