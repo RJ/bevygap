@@ -1,14 +1,15 @@
 version: "3.5"
 services:
 
+  # running nats cluster example: https://gist.github.com/wallyqs/5378f5abcbe4b1b683268cacf2b672d3
   nats:
     ports:
       - "4222:4222"
       - "8222:8222"
     image: nats
-    command: "-js"
+    command: "--js --sd /data"
     volumes:
-      - nats-data:/data
+      - ./nats-data:/data
 
   matchmaker:
     image: matchmaker:latest
@@ -22,6 +23,3 @@ services:
       - NATS_URL=nats://nats:4222
     env_file:
       - .matchmaker.env
-
-volumes:
-  nats-data:

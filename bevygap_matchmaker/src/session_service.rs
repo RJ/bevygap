@@ -1,8 +1,8 @@
 use std::net::SocketAddr;
 
 use crate::MatchmakerState;
-use async_nats::service::ServiceExt;
 use async_nats::Message;
+use async_nats::{jetstream, service::ServiceExt};
 use base64::prelude::*;
 use edgegap::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
 use futures::StreamExt;
@@ -244,6 +244,35 @@ async fn session_responder(
         .expect("Failed to generate token");
 
     let token_bytes = token.try_into_bytes().expect("Failed to serialize token");
+
+    // write the token/session mapping to nats kv.
+    let jetstream = jetstream::new(state.nats_client());
+    let kv = jetstream
+        .create_key_value(async_nats::jetstream::kv::Config {
+            bucket: "tokens".to_string(),
+            ..Default::default()
+        })
+        .await
+        .map_err(|e| {
+            EdgegapError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("tokens KV setup error: {}", e),
+            ))
+        })?;
+
+    kv.put(&session_get.session_id, token_bytes.to_vec().into())
+        .await
+        .map_err(|e| {
+            EdgegapError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!("Failed to put token KV entry: {}", e),
+            ))
+        })?;
+
+    info!(
+        "Stored token for session {} in NATS KV",
+        session_get.session_id
+    );
 
     let resp = SessionResponse {
         session_id: session_get.session_id,
