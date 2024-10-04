@@ -151,7 +151,7 @@ async fn session_responder(
     let mut session_model = SessionModel::new(state.settings.app_name.clone());
     session_model.ip_list = Some(vec![session_request.client_ip.to_string()]);
 
-    session_model.deployment_request_id = Some("9fc09885db2f".to_string());
+    session_model.deployment_request_id = Some(state.settings.deployment_id.to_string());
 
     // create session via edgegap api:
     let post_session = session_post(state.configuration(), session_model).await?;

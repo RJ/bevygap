@@ -10,7 +10,7 @@ use tracing_subscriber::{layer::*, util::*};
 
 mod session_service;
 
-fn edgegap_configuration(settings: &Settings) -> Configuration {
+fn edgegap_configuration(_settings: &Settings) -> Configuration {
     let key =
         std::env::var("EDGEGAP_API_KEY").expect("EDGEGAP_API_KEY environment variable is not set");
     Configuration {
@@ -27,6 +27,9 @@ pub struct Settings {
     app_name: String,
     #[arg(long, default_value = "v0.0.1")]
     app_version: String,
+    /// The deployment ID from edgegap
+    #[arg(long)]
+    deployment_id: String,
 }
 
 async fn connect_to_nats() -> Result<Client, async_nats::Error> {
@@ -86,7 +89,8 @@ async fn main() -> Result<(), async_nats::Error> {
         settings,
     };
 
-    let _deployments = load_deployments(&mm_state).await?;
+    // ensure the specified app, version, and deployment are valid and ready for players.
+    verify_deployment(&mm_state).await?;
 
     let state = mm_state.clone();
     let watcher = tokio::spawn(async move {
@@ -113,11 +117,11 @@ async fn main() -> Result<(), async_nats::Error> {
     // dbg!(deployments);
 }
 
-async fn load_deployments(state: &MatchmakerState) -> Result<(), async_nats::Error> {
+async fn verify_deployment(state: &MatchmakerState) -> Result<(), async_nats::Error> {
     let config = state.configuration();
     let settings = &state.settings;
 
-    let app = application_get(&config, settings.app_name.as_str())
+    let app = application_get(config, settings.app_name.as_str())
         .await
         .unwrap_or_else(|e| panic!("Edgegap API doesn't know this application name: {e}"));
 
@@ -126,62 +130,51 @@ async fn load_deployments(state: &MatchmakerState) -> Result<(), async_nats::Err
         app.name, app.is_active, app.last_updated
     );
 
-    let app_versions = app_versions_get(&config, settings.app_name.as_str())
-        .await
-        .unwrap_or_else(|e| panic!("Failed fetching versions: {e}"));
+    let app_version = app_version_get(
+        config,
+        settings.app_name.as_str(),
+        settings.app_version.as_str(),
+    )
+    .await
+    .unwrap_or_else(|e| panic!("Edgegap API doesn't know this application version: {e}"));
 
-    let versions = app_versions.versions.expect("No versions found");
-
-    let active_versions = versions
-        .iter()
-        .filter(|v| v.is_active == Some(true))
-        .collect::<Vec<_>>();
-
-    let mut is_selected_version_active = false;
-
-    for version in active_versions {
-        info!("🟢 Application version '{}' is active.", version.name);
-        if version.name == settings.app_version {
-            is_selected_version_active = true;
-        }
-    }
-
-    if !is_selected_version_active {
-        warn!(
-            "🔴 Selected version {} is not active.",
-            settings.app_version
+    if app_version.is_active.unwrap_or(false) {
+        info!("🟢 Application version '{}' is active.", app_version.name);
+    } else {
+        error!(
+            "🔴 Application version '{}' is not active, aborting.",
+            app_version.name
         );
         std::process::exit(1);
     }
 
-    let deployments = deployments_get(&config)
+    let deployment = deployment_status_get(config, settings.deployment_id.as_str())
         .await
-        .unwrap_or_else(|e| panic!("Failed fetching deployments: {e}"));
+        .unwrap_or_else(|e| {
+            error!("Deployment ID not found: {}\n {e}", settings.deployment_id);
+            std::process::exit(1);
+        });
 
-    let deployments = deployments.data.expect("No deployments found");
+    let link = deployment
+        .ports
+        .expect("No ports in deployement")
+        .iter()
+        .next()
+        .expect("No port in deployment")
+        .1
+        .link
+        .clone()
+        .expect("No link?");
 
-    if deployments.is_empty() {
-        warn!("🔴 No deployments found");
-        // std::process::exit(1);
-    } else {
-        for deployment in deployments {
-            let link = deployment
-                .ports
-                .expect("No ports in deployement")
-                .iter()
-                .next()
-                .expect("No port in deployment")
-                .1
-                .link
-                .clone()
-                .expect("No link?");
-            let icon = if deployment.ready { "🟢" } else { "🟠" };
-            info!(
-                "{} DEPLOYMENT {} start_time: {} ready: {} link: {}",
-                icon, deployment.request_id, deployment.start_time, deployment.ready, link
-            );
-        }
-    }
+    info!(
+        "✅ {} @ {} :: {} start_time: {} link: {}",
+        settings.app_name,
+        settings.app_version,
+        settings.deployment_id,
+        deployment.start_time,
+        link
+    );
+
     Ok(())
 }
 
