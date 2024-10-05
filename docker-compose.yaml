@@ -13,12 +13,12 @@ services:
 
   matchmaker:
     image: matchmaker:latest
-    command: --app-name spacepit_server --app-version v0.0.1
-    depends_on:
-      - nats
     build:
       context: .
       dockerfile: ./bevygap_matchmaker/Dockerfile
+    command: --app-name spacepit_server --app-version v0.0.1 --deployment-id dfb7d1868c7f
+    depends_on:
+      - nats
     environment:
       - NATS_URL=nats://nats:4222
     env_file:

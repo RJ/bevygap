@@ -1,13 +1,16 @@
+use std::time::Duration;
+
+use async_nats::jetstream;
+use async_nats::jetstream::stream::StorageType;
 use async_nats::Client;
 use clap::Parser;
 use edgegap::apis::applications_api::*;
 use edgegap::apis::configuration::*;
 use edgegap::apis::deployments_api::*;
 use futures::stream::StreamExt;
+use lightyear::connection::netcode::PRIVATE_KEY_BYTES;
 use log::*;
-use serde::{Deserialize, Serialize};
 use tracing_subscriber::{layer::*, util::*};
-
 mod session_service;
 
 fn edgegap_configuration(_settings: &Settings) -> Configuration {
@@ -30,6 +33,46 @@ pub struct Settings {
     /// The deployment ID from edgegap
     #[arg(long)]
     deployment_id: String,
+    /// private key, in format 1,2,3,4..  which should be 32 u8s long (for signing lightyear tokens)
+    #[arg(long, default_value = "")]
+    private_key: String,
+    /// The lightyear protocol id (u64)
+    #[arg(long, default_value = "1982")]
+    protocol_id: u64,
+}
+
+impl Settings {
+    pub fn private_key_bytes(&self) -> [u8; PRIVATE_KEY_BYTES] {
+        if self.private_key.is_empty() {
+            return [0u8; PRIVATE_KEY_BYTES];
+        }
+        let private_key: Vec<u8> = self
+            .private_key
+            .chars()
+            .filter(|c| c.is_ascii_digit() || *c == ',')
+            .collect::<String>()
+            .split(',')
+            .map(|s| {
+                s.parse::<u8>()
+                    .expect("Failed to parse number in private key")
+            })
+            .collect();
+
+        if private_key.len() != PRIVATE_KEY_BYTES {
+            panic!(
+                "Private key must contain exactly {} numbers",
+                PRIVATE_KEY_BYTES
+            );
+        }
+
+        let mut bytes = [0u8; PRIVATE_KEY_BYTES];
+        bytes.copy_from_slice(&private_key);
+        bytes
+    }
+
+    pub fn protocol_id(&self) -> u64 {
+        self.protocol_id
+    }
 }
 
 async fn connect_to_nats() -> Result<Client, async_nats::Error> {
@@ -62,6 +105,8 @@ pub(crate) struct MatchmakerState {
     nats_client: Client,
     api_config: Configuration,
     settings: Settings,
+    kv_s2c: jetstream::kv::Store,
+    kv_c2s: jetstream::kv::Store,
 }
 
 impl MatchmakerState {
@@ -70,6 +115,12 @@ impl MatchmakerState {
     }
     pub(crate) fn configuration(&self) -> &Configuration {
         &self.api_config
+    }
+    pub(crate) fn kv_s2c(&self) -> &jetstream::kv::Store {
+        &self.kv_s2c
+    }
+    pub(crate) fn kv_c2s(&self) -> &jetstream::kv::Store {
+        &self.kv_c2s
     }
 }
 
@@ -83,17 +134,21 @@ async fn main() -> Result<(), async_nats::Error> {
 
     let api_config = edgegap_configuration(&settings);
 
+    let (kv_s2c, kv_c2s) = create_kv_buckets_for_session_mappings(nats_client.clone()).await?;
+
     let mm_state = MatchmakerState {
         nats_client: nats_client.clone(),
         api_config,
         settings,
+        kv_s2c,
+        kv_c2s,
     };
 
     // ensure the specified app, version, and deployment are valid and ready for players.
     verify_deployment(&mm_state).await?;
 
     let state = mm_state.clone();
-    let watcher = tokio::spawn(async move {
+    let _watcher = tokio::spawn(async move {
         match watch_for_gameserver_announcements(&state).await {
             Ok(_) => info!("Gameserver announcement watcher completed"),
             Err(e) => error!("Error in gameserver announcement watcher: {}", e),
@@ -101,7 +156,7 @@ async fn main() -> Result<(), async_nats::Error> {
     });
 
     let state = mm_state.clone();
-    let _session_service = tokio::spawn(async move {
+    let session_service = tokio::spawn(async move {
         match session_service::session_request_supervisor(&state).await {
             Ok(_) => info!("Session service completed"),
             Err(e) => error!("Error in session service: {}", e),
@@ -109,12 +164,45 @@ async fn main() -> Result<(), async_nats::Error> {
     });
 
     // just to block from exiting:
-    watcher.await.unwrap();
+    session_service.await.unwrap();
 
     // shouldn't get here
     info!("Edgegap Matchmaker exiting");
     Ok(())
     // dbg!(deployments);
+}
+
+/// Creates two buckets for mapping between LY client ids and Edgegap session tokens
+async fn create_kv_buckets_for_session_mappings(
+    client: Client,
+) -> Result<(jetstream::kv::Store, jetstream::kv::Store), async_nats::Error> {
+    let jetstream = jetstream::new(client);
+
+    let kv_s2c = jetstream
+        .create_key_value(async_nats::jetstream::kv::Config {
+            bucket: "sessions_eg2ly".to_string(),
+            description: "Maps Edgegap Session IDs to Lightyear Client IDs".to_string(),
+            max_value_size: 1024,
+            // shouldn't need long for the client to receive token, and make connection to gameserver.
+            max_age: Duration::from_millis(30000),
+            storage: StorageType::Memory,
+            ..Default::default()
+        })
+        .await?;
+
+    let kv_c2s = jetstream
+        .create_key_value(async_nats::jetstream::kv::Config {
+            bucket: "sessions_ly2eg".to_string(),
+            description: "Maps Lightyear Client IDs to Edgegap Session IDs".to_string(),
+            max_value_size: 1024,
+            // shouldn't need long for the client to receive token, and make connection to gameserver.
+            max_age: Duration::from_millis(30000),
+            storage: StorageType::Memory,
+            ..Default::default()
+        })
+        .await?;
+
+    Ok((kv_s2c, kv_c2s))
 }
 
 async fn verify_deployment(state: &MatchmakerState) -> Result<(), async_nats::Error> {
@@ -154,6 +242,11 @@ async fn verify_deployment(state: &MatchmakerState) -> Result<(), async_nats::Er
             error!("Deployment ID not found: {}\n {e}", settings.deployment_id);
             std::process::exit(1);
         });
+
+    if !deployment.running {
+        error!("Deployment is not running, aborting.");
+        std::process::exit(1);
+    }
 
     let link = deployment
         .ports

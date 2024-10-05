@@ -1,12 +1,11 @@
 use std::net::SocketAddr;
 
 use crate::MatchmakerState;
-use async_nats::Message;
-use async_nats::{jetstream, service::ServiceExt};
+use async_nats::service::ServiceExt;
 use base64::prelude::*;
 use edgegap::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
 use futures::StreamExt;
-use lightyear::{connection::netcode::PRIVATE_KEY_BYTES, prelude::ConnectToken};
+use lightyear::prelude::ConnectToken;
 use log::*;
 use serde::{de, Deserialize, Serialize};
 // use std::{env, str::from_utf8, time::Duration};
@@ -22,20 +21,18 @@ struct SessionRequest {
 #[derive(Serialize)]
 struct SessionResponse {
     connect_token: String,
-    session_id: String,
-    gameserver_fqdn: String,
     gameserver_ip: String,
     gameserver_port: u16,
+    link: String,
 }
 
 impl std::fmt::Display for SessionResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SessionResponse {{ connect_token: [{} bytes], session_id: {}, gameserver_fqdn: {}, gameserver_ip: {}, gameserver_port: {} }}",
+        write!(
+            f,
+            "SessionResponse {{ connect_token: [{} bytes], link: {} }}",
             self.connect_token.len(),
-            self.session_id,
-            self.gameserver_fqdn,
-            self.gameserver_ip,
-            self.gameserver_port
+            self.link,
         )
     }
 }
@@ -160,6 +157,7 @@ async fn session_responder(
 
     let mut session_get;
     let mut tries = 0;
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
     loop {
         tries += 1;
         info!("GET SESSION... ({tries})");
@@ -176,29 +174,20 @@ async fn session_responder(
             break;
         }
 
-        if tries > 10 {
+        if tries > 15 {
             return Err(EdgegapError::Io(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "session not ready timeout on tries",
             )));
         }
 
-        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        tokio::time::sleep(tokio::time::Duration::from_secs(200)).await;
     }
 
     info!("{session_get:?}");
 
     // We must wait until the session is ready / linked before telling the client to connect.
     // You can ask for a webhook, but for now we just poll until it's ready.
-
-    // info!("SLEEP");
-    // tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
-
-    // let session_get = get_session(state.configuration(), post_session.session_id.as_str())
-    //     .await
-    //     .map_err(|_| std::io::Error::new(std::io::ErrorKind::Other, "get session error"))?;
-
-    // info!("{session_get:?}");
 
     let deployment = session_get.deployment.expect("deployment not found");
 
@@ -222,15 +211,10 @@ async fn session_responder(
         .and_then(|(_, port_info)| port_info.external)
         .expect("Couldn't get port");
 
-    pub const PROTOCOL_ID: u64 = 1982;
     //  assign a new client_id
     let client_id = rand::random();
     info!("client_id = {client_id}");
 
-    pub const PRIVATE_KEY: [u8; PRIVATE_KEY_BYTES] = [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0,
-    ];
     let ip = deployment
         .public_ip
         .as_str()
@@ -239,28 +223,37 @@ async fn session_responder(
     let server_addresses = SocketAddr::new(ip, port as u16);
 
     info!("server_addresses = {server_addresses}");
-    let token = ConnectToken::build(server_addresses, PROTOCOL_ID, client_id, PRIVATE_KEY)
-        .generate()
-        .expect("Failed to generate token");
+    let token = ConnectToken::build(
+        server_addresses,
+        state.settings.protocol_id(),
+        client_id,
+        state.settings.private_key_bytes(),
+    )
+    .generate()
+    .expect("Failed to generate token");
 
     let token_bytes = token.try_into_bytes().expect("Failed to serialize token");
+    let token_base64 = BASE64_STANDARD.encode(token_bytes);
 
-    // write the token/session mapping to nats kv.
-    let jetstream = jetstream::new(state.nats_client());
-    let kv = jetstream
-        .create_key_value(async_nats::jetstream::kv::Config {
-            bucket: "tokens".to_string(),
-            ..Default::default()
-        })
+    // user-level code using lightyear doesn't even see the connect token, so we do the
+    // lookup based on clientid.
+    let client_id_str = client_id.to_string();
+    state
+        .kv_c2s()
+        .put(
+            client_id_str.as_str(),
+            session_get.session_id.clone().into(),
+        )
         .await
         .map_err(|e| {
             EdgegapError::Io(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                format!("tokens KV setup error: {}", e),
+                format!("Failed to put token KV entry: {}", e),
             ))
         })?;
-
-    kv.put(&session_get.session_id, token_bytes.to_vec().into())
+    state
+        .kv_s2c()
+        .put(session_get.session_id.as_str(), client_id_str.into())
         .await
         .map_err(|e| {
             EdgegapError::Io(std::io::Error::new(
@@ -275,18 +268,11 @@ async fn session_responder(
     );
 
     let resp = SessionResponse {
-        session_id: session_get.session_id,
-        connect_token: BASE64_STANDARD.encode(token_bytes),
-        gameserver_fqdn: deployment.fqdn,
+        connect_token: token_base64,
+        link: format!("{}:{port}", deployment.public_ip),
         gameserver_ip: deployment.public_ip,
         gameserver_port: port as u16,
     };
 
     Ok(resp)
 }
-
-// how to timeout an async call?
-// let response = tokio::time::timeout(
-//     Duration::from_millis(500),
-//     client.request("greet.bob", "".into()),
-// )
