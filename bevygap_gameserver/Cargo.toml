@@ -7,19 +7,15 @@ publish.workspace = true
 
 [dependencies]
 bevygap_shared = { path = "../bevygap_shared" , features = ["bevy"]}
-# need default features only for the example.. TODO remove, and remove example once testing over?
-bevy = { workspace = tru } ######, default-features = true }
+bevy.workspace = true
 bevy-tokio-tasks.workspace = true
-futures.workspace = true
-futures-util.workspace = true
-tokio.workspace = true
-tokio-tungstenite.workspace = true
-async-nats.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 url.workspace = true
 reqwest.workspace = true
 lightyear.workspace = true
+async-nats.workspace = true
+tokio.workspace = true
 
 [lints] 
 workspace = true
