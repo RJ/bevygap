@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevygap_gameserver::plugin::BevygapGameserverPlugin;
+use bevygap_gameserver::prelude::*;
 
 fn main() {
     App::new()
@@ -10,7 +10,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(BevygapGameserverPlugin)
+        .add_plugins(BevygapGameserverPlugin { mock_env: true })
         .add_systems(Startup, setup)
         .run();
 

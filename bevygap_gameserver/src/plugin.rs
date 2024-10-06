@@ -13,15 +13,27 @@ use bevy_tokio_tasks::{TokioTasksPlugin, TokioTasksRuntime};
 use lightyear::connection::netcode::ClientId;
 use lightyear::server::events::{ConnectEvent, DisconnectEvent};
 
-use crate::arbitrium_env::edgegap_environment_variables_reader_plugin;
+use crate::arbitrium_env::ArbitriumEnv;
 use crate::edgegap_context_plugin::{ArbitriumContext, EdgegapContextPlugin};
 
 /// Plugin for gameservers that run on edgegap.
-pub struct BevygapGameserverPlugin;
+#[derive(Default)]
+pub struct BevygapGameserverPlugin {
+    /// if true, use mock envs instead of reading Arbitrium ones.
+    pub mock_env: bool
+}
 
 impl Plugin for BevygapGameserverPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(edgegap_environment_variables_reader_plugin);
+        let arb_env = if self.mock_env {
+            info!("Reading MOCK Arbitrium ENVs");
+            ArbitriumEnv::from_example()
+        } else {
+            info!("Reading Arbitrium ENVs");
+            ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs")
+        };
+        app.insert_resource(arb_env);
+
         app.add_plugins(TokioTasksPlugin::default());
         app.add_plugins(EdgegapContextPlugin);
 

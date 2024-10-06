@@ -1,13 +1,5 @@
 use bevy::prelude::*;
 
-/// Plugin to read the Arbitrium environment variables into a resource
-pub fn edgegap_environment_variables_reader_plugin(app: &mut App) {
-    info!("Reading Arbitrium ENVs");
-    let arb_env = ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs");
-    // let arb_env = ArbitriumEnv::from_example();
-    app.insert_resource(arb_env);
-}
-
 /// Represents the environment variables provided by Arbitrium for deployments.
 #[derive(Debug, Clone, Resource)]
 pub struct ArbitriumEnv {
