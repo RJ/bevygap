@@ -1,12 +1,14 @@
-# Bevygap: Running Bevy+Lightyear multiplayer servers on Edgegap
+# Bevygap – Multiplayer server management tools
 
-This is a (WIP) suite of services for running multiplayer game servers on Edgegap, where the games are
-built with bevy using the Lightyear networking library.
+This is a (WIP) suite of services for running multiplayer game servers on [Edgegap](https://edgegap.com), where the games are
+built with Bevy using the [Lightyear](https://crates.io/crates/lightyear) networking library.
 
 The goal is to have an easy-to-deploy system either yourself with docker-compose, or in the cloud,
 to use Edgegap to spin up gameservers on demand. 
 
-## bevygap_matchmaker
+## Components
+
+### bevygap_matchmaker
 
 Clients wishing to connect to the game make a request to our matchmaker service, which then:
 
@@ -17,7 +19,7 @@ Clients wishing to connect to the game make a request to our matchmaker service,
   (the gameserver ip+port will be a machine controlled by Edgegap, running your game server's docker image)
 
 
-## bevygap_gameserver
+### bevygap_gameserver
 
 A bevy plugin for the gameserver, which loads its deployment context from the edgegap API on boot,
 and connects to our NATS instance in order to lookup session information. Your gameserver should
@@ -25,21 +27,25 @@ be a docker image that runs on Edgegap's infrastructure.
 
 When a player connects, we lookup the Edgegap session ID in NATS KV that corresponds to the `client_id` from the `ConnectToken`.
 
-When the player disconnects, it makes a request to Edgegap's API to delete the session. (TODO)
+When the player disconnects, it ensures the Edgegap API call to delete the session happens. (TODO)
 
 
-## bevygap_httpd (TODO)
+### bevygap_httpd (TODO)
 
 An http endpoint to make "i want to play" requests to the matchmaker.
 
-## nats
+### bevygap_shared
+
+Shared code for the NATS stuff, used between the matchmaker and gameserver.
+
+### nats
 
 Nats is the shared state and messaging backend between our various components.
 
 # Running
 
 You need an edgegap account, with your gameserver's docker image built and pushed to a registry.
-The gameserver must use the bevygap_edgegap plugin, with NATS configured correctly (TODO)
+The gameserver must use the bevygap_gameserver plugin, with NATS configured correctly (TODO)
 
 ```bash
 # This will start nats, the matchmaker, and the httpd
