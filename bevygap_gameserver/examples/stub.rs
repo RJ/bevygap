@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_edgegap_gameserver::plugin::EdgeGapGameServerPlugin;
+use bevygap_gameserver::plugin::EdgeGapGameServerPlugin;
 
 fn main() {
     App::new()

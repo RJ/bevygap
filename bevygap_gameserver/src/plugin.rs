@@ -11,9 +11,9 @@ use crate::arbitrium_env::edgegap_environment_variables_reader_plugin;
 use crate::edgegap_context_plugin::{ArbitriumContext, EdgegapContextPlugin};
 
 /// Plugin for gameservers that run on edgegap.
-pub struct EdgeGapGameServerPlugin;
+pub struct BevygapGameserverPlugin;
 
-impl Plugin for EdgeGapGameServerPlugin {
+impl Plugin for BevygapGameserverPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(edgegap_environment_variables_reader_plugin);
         app.add_plugins(TokioTasksPlugin::default());

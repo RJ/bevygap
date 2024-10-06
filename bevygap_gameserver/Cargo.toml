@@ -1,11 +1,12 @@
 [package]
-name = "bevy_edgegap_gameserver"
+name = "bevygap_gameserver"
 edition = "2021"
 version.workspace = true
 authors.workspace = true
 publish.workspace = true
 
 [dependencies]
+# need default features only for the example.. TODO remove, and remove example once testing over?
 bevy = { workspace = true, default-features = true }
 bevy-tokio-tasks.workspace = true
 futures.workspace = true

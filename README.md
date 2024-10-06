@@ -42,7 +42,7 @@ The gameserver must use the bevygap_edgegap plugin, with NATS configured correct
 
 ```bash
 # This will start nats, the matchmaker, and the httpd
-docker compose up
+docker-compose up
 ```
 
 ```bash
@@ -57,8 +57,16 @@ nats req session.gensession '{"client_ip": "81.128.172.55", "foo":123}'
 
 ```bash
 # Note that NATS KV now links the assigned session id to the client id from the issued token.
-nats kv ls sessions_ly2eg
-nats kv ls sessions_eg2ly
+nats kv ls
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                   Key-Value Buckets                                                   │
+├────────────────┬──────────────────────────────────────────────────┬─────────────────────┬──────┬────────┬─────────────┤
+│ Bucket         │ Description                                      │ Created             │ Size │ Values │ Last Update │
+├────────────────┼──────────────────────────────────────────────────┼─────────────────────┼──────┼────────┼─────────────┤
+│ sessions_eg2ly │ Maps Edgegap Session IDs to Lightyear Client IDs │ 2024-10-05 13:33:12 │ 69 B │ 1      │ 12.92s      │
+│ sessions_ly2eg │ Maps Lightyear Client IDs to Edgegap Session IDs │ 2024-10-05 13:33:12 │ 69 B │ 1      │ 12.92s      │
+╰────────────────┴──────────────────────────────────────────────────┴─────────────────────┴──────┴────────┴─────────────╯
 
 # get the Session ID from the lightyear client id:
 nats kv get sessions_ly2eg "123456.."
