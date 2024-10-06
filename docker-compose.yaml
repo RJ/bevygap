@@ -18,9 +18,14 @@ services:
       context: .
       dockerfile: ./bevygap_matchmaker/Dockerfile
     command: --app-name spacepit_server --app-version v0.0.1 --deployment-id dfb7d1868c7f
+    volumes:
+      - ./config:/config
     depends_on:
       - nats
     environment:
-      - NATS_URL=nats://nats:4222
+      - NATS_HOST=nats:4222
+      - NATS_CA=/config/rootCA.pem
+      - NATS_CERT=/config/client-cert.pem
+      - NATS_KEY=/config/client-key.pem
     env_file:
       - .matchmaker.env

@@ -49,7 +49,9 @@ impl Plugin for BevygapGameserverPlugin {
             (
                 handle_lightyear_connect_events,
                 handle_lightyear_disconnect_events,
-            ),
+            )
+            .run_if(resource_exists::<Events<ConnectEvent>>)
+            .run_if(resource_exists::<Events<DisconnectEvent>>),
         );
     }
 }
@@ -123,6 +125,14 @@ fn setup_nats(
 
     let fqdn = arb_context.fqdn();
     let nats_key = fqdn.replace('.', "_");
+
+    // this probably isn't ideal, but i need panics from tokio tasks to 
+    // kill the process.
+    let default_panic = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        default_panic(info);
+        std::process::exit(1);
+    }));
 
     runtime.spawn_background_task(|mut ctx| async move {
         let bgnats = match BevygapNats::new_and_connect(nats_key.as_str()).await {
