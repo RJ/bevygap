@@ -89,8 +89,15 @@ nats kv get sessions_ly2eg "123456.."
 
 ```
 # server cert
-mkcert -cert-file server-cert.pem -key-file server-key.pem localhost ::1 127.0.0.1
+mkcert -cert-file server-cert.pem -key-file server-key.pem localhost ::1 127.0.0.1 nats
 # using CA:
 cat "$(mkcert -CAROOT)/rootCA.pem"
 
+mkcert -client -cert-file client-cert.pem -key-file client-key.pem localhost ::1 127.0.0.1 email@localhost matchmaker
+
 ```
+
+## NOTES
+
+do i need hostname in client cert for gameserver? 
+maybe just ship one cert with the docker image for servers?

@@ -42,7 +42,7 @@ impl BevygapNats {
     }
 
     async fn connect_to_nats(nats_client_name: &str) -> Result<Client, async_nats::Error> {
-        info!("Setting up NATS");
+        info!("Setting up NATS, client name: {}", nats_client_name);
         let nats_host = std::env::var("NATS_HOST").unwrap_or("localhost:4222".to_string());
         let nats_ca = std::env::var("NATS_CA").unwrap_or("./config/rootCA.pem".to_string());
         let nats_cert =

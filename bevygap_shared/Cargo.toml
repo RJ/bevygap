@@ -6,7 +6,7 @@ publish.workspace = true
 edition.workspace = true
 
 [features]
-default-features = []
+default = []
 bevy = ["dep:bevy"]
 
 [dependencies]
