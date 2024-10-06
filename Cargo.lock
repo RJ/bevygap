@@ -1294,8 +1294,10 @@ dependencies = [
  "async-nats",
  "bevy",
  "bevy-tokio-tasks",
+ "bevygap_shared",
  "futures",
  "futures-util",
+ "lightyear",
  "reqwest",
  "serde",
  "serde_json",
@@ -1310,6 +1312,7 @@ version = "0.1.0"
 dependencies = [
  "async-nats",
  "base64 0.22.1",
+ "bevygap_shared",
  "clap",
  "edgegap",
  "futures",
@@ -1323,6 +1326,15 @@ dependencies = [
  "tokio-tungstenite",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "bevygap_shared"
+version = "0.1.0"
+dependencies = [
+ "async-nats",
+ "bevy",
+ "log",
 ]
 
 [[package]]

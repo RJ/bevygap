@@ -7,8 +7,9 @@ services:
       - "4222:4222"
       - "8222:8222"
     image: nats
-    command: "--js --sd /data"
+    command: "--js --sd /data --tls --tlscert=/config/server-cert.pem --tlskey=/config/server-key.pem --tlscacert=/config/rootCA.pem"
     volumes:
+      - ./nats-config:/config
       - ./nats-data:/data
 
   matchmaker:

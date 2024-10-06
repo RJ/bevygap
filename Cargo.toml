@@ -1,5 +1,5 @@
 [workspace]
-members = ["bevygap_matchmaker", "bevygap_gameserver"]
+members = ["bevygap_matchmaker", "bevygap_gameserver", "bevygap_shared"]
 resolver = "2"
 
 

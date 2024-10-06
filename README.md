@@ -17,10 +17,11 @@ Clients wishing to connect to the game make a request to our matchmaker service,
   (the gameserver ip+port will be a machine controlled by Edgegap, running your game server's docker image)
 
 
-## bevy_edgegap_gameserver
+## bevygap_gameserver
 
 A bevy plugin for the gameserver, which loads its deployment context from the edgegap API on boot,
-and connects to our NATS instance in order to lookup session information.
+and connects to our NATS instance in order to lookup session information. Your gameserver should
+be a docker image that runs on Edgegap's infrastructure.
 
 When a player connects, we lookup the Edgegap session ID in NATS KV that corresponds to the `client_id` from the `ConnectToken`.
 
@@ -70,4 +71,16 @@ nats kv ls
 
 # get the Session ID from the lightyear client id:
 nats kv get sessions_ly2eg "123456.."
+```
+
+
+
+## Nats setup
+
+```
+# server cert
+mkcert -cert-file server-cert.pem -key-file server-key.pem localhost ::1 127.0.0.1
+# using CA:
+cat "$(mkcert -CAROOT)/rootCA.pem"
+
 ```

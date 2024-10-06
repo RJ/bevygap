@@ -6,6 +6,7 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
+bevygap_shared = { path = "../bevygap_shared" }
 futures.workspace = true
 futures-util.workspace = true
 tokio.workspace = true

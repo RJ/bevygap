@@ -2,3 +2,5 @@
 */target/
 *.env
 .matchmaker.env
+config
+nats-config
