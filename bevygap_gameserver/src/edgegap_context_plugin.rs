@@ -93,13 +93,16 @@ fn fetch_context(runtime: ResMut<TokioTasksRuntime>, arb_env: Res<ArbitriumEnv>)
     runtime.spawn_background_task(|mut ctx| async move {
         let arb_context = fetch_context_from_api(&context_url, &context_token)
             .await
+            // .expect("Failed to fetch context from Edgegap API");
             .unwrap_or_else(|_err| {
-                // panic, or use a fake value:
-                warn!("Using fake context!");
-                let mut context = serde_json::Map::new();
-                context.insert("fake_data".into(), "lol".into());
-                context.insert("fqdn".into(), "rj.example.com".into());
-                ArbitriumContext { context }
+                error!("Failed to fetch context from Edgegap API: {_err}");
+                panic!("Failed to fetch context");
+                // // panic, or use a fake value:
+                // warn!("Using fake context!");
+                // let mut context = serde_json::Map::new();
+                // context.insert("fake_data".into(), "lol".into());
+                // context.insert("fqdn".into(), "rj.example.com".into());
+                // ArbitriumContext { context }
             });
         info!("Got Context: {arb_context:?}");
         ctx.run_on_main_thread(move |ctx| {

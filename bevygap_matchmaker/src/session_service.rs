@@ -222,7 +222,11 @@ async fn session_responder(
         .expect("Failed parsing server ip");
     let server_addresses = SocketAddr::new(ip, port as u16);
 
-    info!("server_addresses = {server_addresses}");
+    info!(
+        "🏠 BUILD ConnectToken: server_addresses = {server_addresses} proto id: {}, client_id: {client_id}, privkey: {:?}",
+        state.settings.protocol_id(),
+        state.settings.private_key_bytes()
+    );
     let token = ConnectToken::build(
         server_addresses,
         state.settings.protocol_id(),

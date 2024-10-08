@@ -33,7 +33,6 @@ impl Plugin for BevygapGameserverPlugin {
             ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs")
         };
         app.insert_resource(arb_env);
-
         app.add_plugins(TokioTasksPlugin::default());
         app.add_plugins(EdgegapContextPlugin);
 
@@ -117,6 +116,7 @@ fn setup_nats(
     arb_context: Res<ArbitriumContext>,
     mut commands: Commands,
 ) {
+    info!("Setting up NATS");
     let arb_context_bytes = arb_context.to_bytes();
 
     let (nats_event_sender, mut nats_event_receiver) =

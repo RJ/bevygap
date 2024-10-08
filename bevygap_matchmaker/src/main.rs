@@ -121,6 +121,7 @@ async fn main() -> Result<(), async_nats::Error> {
     let bgnats = BevygapNats::new_and_connect("matchmaker").await.unwrap();
 
     let settings = Settings::parse();
+    // info!("priv key bytes: {:?}", settings.private_key_bytes());
 
     let api_config = edgegap_configuration(&settings);
 
