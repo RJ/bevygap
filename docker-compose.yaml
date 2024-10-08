@@ -22,10 +22,9 @@ services:
       - ./config:/config
     depends_on:
       - nats
-    environment:
-      - NATS_HOST=nats:4222
-      - NATS_CA=/config/rootCA.pem
-      - NATS_CERT=/config/client-cert.pem
-      - NATS_KEY=/config/client-key.pem
+    # Specify the following in env file:
+    # NATS_HOST="nats.example.com:4222"
+    # NATS_USER=a
+    # NATS_PASS=b
     env_file:
       - .matchmaker.env

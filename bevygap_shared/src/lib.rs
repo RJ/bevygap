@@ -44,22 +44,26 @@ impl BevygapNats {
     async fn connect_to_nats(nats_client_name: &str) -> Result<Client, async_nats::Error> {
         info!("Setting up NATS, client name: {}", nats_client_name);
         let nats_host = std::env::var("NATS_HOST").unwrap_or("localhost:4222".to_string());
-        let nats_ca = std::env::var("NATS_CA").unwrap_or("./config/rootCA.pem".to_string());
-        let nats_cert =
-            std::env::var("NATS_CERT").unwrap_or("./config/client-cert.pem".to_string());
-        let nats_key = std::env::var("NATS_KEY").unwrap_or("./config/client-key.pem".to_string());
+        let nats_user = std::env::var("NATS_USER").unwrap_or("unspecified-user".to_string());
+        let nats_pass = std::env::var("NATS_PASS").unwrap_or("unspecified-pass".to_string());
+
+        // let nats_ca = std::env::var("NATS_CA").unwrap_or("./config/rootCA.pem".to_string());
+        // let nats_cert =
+        // std::env::var("NATS_CERT").unwrap_or("./config/client-cert.pem".to_string());
+        // let nats_key = std::env::var("NATS_KEY").unwrap_or("./config/client-key.pem".to_string());
 
         info!("NATS_HOST: {}", nats_host);
-        info!("NATS_CA: {}", nats_ca);
-        info!("NATS_CERT: {}", nats_cert);
-        info!("NATS_KEY: {}", nats_key);
+        // info!("NATS_CA: {}", nats_ca);
+        // info!("NATS_CERT: {}", nats_cert);
+        // info!("NATS_KEY: {}", nats_key);
 
         let client = async_nats::ConnectOptions::new()
             .name(nats_client_name)
+            .user_and_password(nats_user, nats_pass)
             .max_reconnects(10)
             .require_tls(true)
-            .add_root_certificates(nats_ca.into())
-            .add_client_certificate(nats_cert.into(), nats_key.into())
+            // .add_root_certificates(nats_ca.into())
+            // .add_client_certificate(nats_cert.into(), nats_key.into())
             .connect(nats_host)
             .await?;
 

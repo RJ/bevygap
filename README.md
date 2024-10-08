@@ -83,6 +83,10 @@ nats kv ls
 nats kv get sessions_ly2eg "123456.."
 ```
 
+If running outside docker, source the (non-exported) envs:
+```bash
+set -a && . ./.matchmaker.env && set +a
+```
 
 
 ## Nats setup
@@ -99,5 +103,4 @@ mkcert -client -cert-file client-cert.pem -key-file client-key.pem localhost ::1
 
 ## NOTES
 
-do i need hostname in client cert for gameserver? 
-maybe just ship one cert with the docker image for servers?
+My nats setup for initial live testing is tls server with username+pass auth.
