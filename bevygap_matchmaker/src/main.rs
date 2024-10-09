@@ -34,9 +34,6 @@ pub struct Settings {
     app_name: String,
     #[arg(long, default_value = "v0.0.1")]
     app_version: String,
-    /// The deployment ID from edgegap
-    #[arg(long)]
-    deployment_id: String,
     /// private key, in format 1,2,3,4..  which should be 32 u8s long (for signing lightyear tokens)
     #[arg(long, default_value = "")]
     lightyear_private_key: String,
@@ -136,7 +133,7 @@ async fn main() -> Result<(), async_nats::Error> {
     };
 
     // ensure the specified app, version, and deployment are valid and ready for players.
-    verify_deployment(&mm_state).await?;
+    verify_application(&mm_state).await?;
 
     let state = mm_state.clone();
     let _watcher = tokio::spawn(async move { session_cleanup_supervisor(&state).await });
@@ -166,7 +163,7 @@ async fn main() -> Result<(), async_nats::Error> {
     // dbg!(deployments);
 }
 
-async fn verify_deployment(state: &MatchmakerState) -> Result<(), async_nats::Error> {
+async fn verify_application(state: &MatchmakerState) -> Result<(), async_nats::Error> {
     let config = state.configuration();
     let settings = &state.settings;
 
@@ -197,37 +194,7 @@ async fn verify_deployment(state: &MatchmakerState) -> Result<(), async_nats::Er
         std::process::exit(1);
     }
 
-    let deployment = deployment_status_get(config, settings.deployment_id.as_str())
-        .await
-        .unwrap_or_else(|e| {
-            error!("Deployment ID not found: {}\n {e}", settings.deployment_id);
-            std::process::exit(1);
-        });
-
-    if !deployment.running {
-        error!("Deployment is not running, aborting.");
-        std::process::exit(1);
-    }
-
-    let link = deployment
-        .ports
-        .expect("No ports in deployement")
-        .iter()
-        .next()
-        .expect("No port in deployment")
-        .1
-        .link
-        .clone()
-        .expect("No link?");
-
-    info!(
-        "✅ {} @ {} :: {} start_time: {} link: {}",
-        settings.app_name,
-        settings.app_version,
-        settings.deployment_id,
-        deployment.start_time,
-        link
-    );
+    info!("✅ {} @ {}", settings.app_name, settings.app_version);
 
     Ok(())
 }
