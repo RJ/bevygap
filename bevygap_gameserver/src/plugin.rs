@@ -3,6 +3,7 @@
 // use crate::arbitrium_env::ArbitriumEnv;
 // use crate::http_client::*;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 // use bevy::tasks::block_on;
 use bevygap_shared::*;
 // use futures::StreamExt;
@@ -20,7 +21,7 @@ use crate::edgegap_context_plugin::ArbitriumContext;
 #[derive(Default)]
 pub struct BevygapGameserverPlugin {
     /// if true, use mock envs instead of reading Arbitrium ones.
-    pub mock_env: bool
+    pub mock_env: bool,
 }
 
 #[derive(Event)]
@@ -28,6 +29,7 @@ pub struct BevygapReady;
 
 impl Plugin for BevygapGameserverPlugin {
     fn build(&self, app: &mut App) {
+        info!("BevygapGameserverPlugin::build");
         let arb_env = if self.mock_env {
             info!("Reading MOCK Arbitrium ENVs");
             ArbitriumEnv::from_example()
@@ -39,18 +41,18 @@ impl Plugin for BevygapGameserverPlugin {
         app.add_plugins(TokioTasksPlugin::default());
         // app.add_plugins(EdgegapContextPlugin);
         app.add_systems(Startup, setup_nats);
-        app.add_systems(Update, (
-            crate::edgegap_context_plugin::fetch_context.run_if(resource_added::<BevygapNats>),
-            context_added.run_if(resource_added::<ArbitriumContext>),
-            )
+        app.add_systems(
+            Update,
+            (
+                crate::edgegap_context_plugin::fetch_context.run_if(resource_added::<BevygapNats>),
+                context_added.run_if(resource_added::<ArbitriumContext>),
+            ),
         );
 
         app.observe(handle_lightyear_client_connect);
         app.observe(handle_lightyear_client_disconnect);
-
     }
 }
-
 
 // switch to observers for ConnectEvent and DisconnectEvent!
 
@@ -70,10 +72,13 @@ fn handle_lightyear_client_connect(
     let client_id = trigger.event().client_id;
     info!("Lightyear connect event for client_id {}", client_id);
     nats_sender.client_connected(client_id.to_bits());
-
 }
 
-fn context_added(context: Res<ArbitriumContext>, nats_sender: ResMut<NatsSender>, mut commands: Commands) {
+fn context_added(
+    context: Res<ArbitriumContext>,
+    nats_sender: ResMut<NatsSender>,
+    mut commands: Commands,
+) {
     info!("CONTEXT added: {context:?}");
     info!("CONTEXT fqdn: {}", context.fqdn());
     nats_sender.arbitrium_context(context.clone());
@@ -112,10 +117,7 @@ impl NatsSender {
     }
 }
 
-fn setup_nats(
-    runtime: ResMut<TokioTasksRuntime>,
-    mut commands: Commands,
-) {
+fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
     info!("Setting up NATS");
 
     let (nats_event_sender, mut nats_event_receiver) =
@@ -125,7 +127,7 @@ fn setup_nats(
     // let fqdn = arb_context.fqdn();
     let nats_key = "somegameserver".to_string(); // fqdn.replace('.', "_");
 
-    // this probably isn't ideal, but i need panics from tokio tasks to 
+    // this probably isn't ideal, but i need panics from tokio tasks to
     // kill the process.
     let default_panic = std::panic::take_hook();
     std::panic::set_hook(Box::new(move |info| {
@@ -144,7 +146,7 @@ fn setup_nats(
         info!("NATS connected");
         // let server_kv = nats.server_kv.clone();
         // let server_key = nats.server_key.clone();
-        
+
         let kv_c2s = bgnats.kv_c2s().clone();
         let kv_sessions = bgnats.kv_sessions().clone();
 
@@ -163,7 +165,7 @@ fn setup_nats(
         })
         .await;
 
-
+        let mut client_id_to_session_id = HashMap::new();
 
         // Loop over nats_event_receiver and log received NatsEvents
         info!("Starting NatsEvent loop");
@@ -185,12 +187,12 @@ fn setup_nats(
                             panic!("Client ID is not mapped to a session id! wtf.");
                         }
                         Some(session_id) => {
-                            let key = format!("{nats_key}.{client_id}");
-                            info!(
-                                "Client ID {client_id} associated with session id: {session_id:?}, storing in {key}",
-                            );
+                            let key = String::from_utf8(session_id.into())
+                                .expect("Failed to convert session_id to string");
+                            info!("Client ID {client_id} associated with session id: {key}",);
+                            client_id_to_session_id.insert(client_id, key.clone());
                             kv_sessions
-                                .put(key, session_id)
+                                .put(key, client_id.to_string().into())
                                 .await
                                 .expect("Failed to put client_id in KV");
                         }
@@ -198,11 +200,14 @@ fn setup_nats(
                 }
                 NatsEvent::ClientDisconnected(client_id) => {
                     info!("Client disconnected: {}, writing to nats kv", client_id);
-                    let key = format!("{nats_key}.{client_id}");
-                    kv_sessions
-                        .delete(key)
-                        .await
-                        .expect("Failed to del client_id in KV");
+                    if let Some(session_id) = client_id_to_session_id.get(&client_id) {
+                        kv_sessions
+                            .delete(session_id)
+                            .await
+                            .expect("Failed to del client_id in KV");
+                    } else {
+                        error!("Client disconnected but not found in client_id_to_session_id");
+                    }
                 }
                 NatsEvent::ArbitriumContext(context) => {
                     info!("ArbitriumContext added: {context:?}");
@@ -212,7 +217,6 @@ fn setup_nats(
                         .publish("gameserver.contexts", arb_context_bytes.into())
                         .await
                         .expect("Failed to write context to NATS");
-
                 }
             }
             client.flush().await.expect("Failed to flush NATS");

@@ -10,6 +10,7 @@ use edgegap::apis::deployments_api::*;
 use futures::stream::StreamExt;
 use lightyear::connection::netcode::PRIVATE_KEY_BYTES;
 use log::*;
+use session_service::session_cleanup_supervisor;
 use tracing_subscriber::{layer::*, util::*};
 
 use bevygap_shared::*;
@@ -112,6 +113,9 @@ impl MatchmakerState {
     pub(crate) fn kv_c2s(&self) -> &jetstream::kv::Store {
         self.nats.kv_c2s()
     }
+    pub(crate) fn kv_sessions(&self) -> &jetstream::kv::Store {
+        self.nats.kv_sessions()
+    }
 }
 
 #[tokio::main]
@@ -133,6 +137,9 @@ async fn main() -> Result<(), async_nats::Error> {
 
     // ensure the specified app, version, and deployment are valid and ready for players.
     verify_deployment(&mm_state).await?;
+
+    let state = mm_state.clone();
+    let _watcher = tokio::spawn(async move { session_cleanup_supervisor(&state).await });
 
     let state = mm_state.clone();
     let _watcher = tokio::spawn(async move {

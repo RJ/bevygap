@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 use crate::MatchmakerState;
-use async_nats::service::ServiceExt;
+use async_nats::{jetstream::kv::Operation, service::ServiceExt};
 use base64::prelude::*;
 use edgegap::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
 use futures::StreamExt;
@@ -54,11 +54,51 @@ fn decode_request(raw: &[u8]) -> Result<SessionRequest, serde_json::Error> {
     })
 }
 
+pub async fn session_cleanup_supervisor(state: &MatchmakerState) -> Result<(), async_nats::Error> {
+    let state = state.clone();
+    let handle = tokio::spawn(async move {
+        loop {
+            let _ = session_cleanup_watcher(&state).await;
+            error!("session_cleanup_watcher exited, restarting");
+        }
+    });
+    futures::future::join_all([handle]).await;
+    Ok(())
+}
+
 pub async fn session_request_supervisor(state: &MatchmakerState) -> Result<(), async_nats::Error> {
     let handles = (0..5).map(|_| session_request_handler(state));
 
     futures::future::join_all(handles).await;
 
+    Ok(())
+}
+
+async fn session_cleanup_watcher(state: &MatchmakerState) -> Result<(), async_nats::Error> {
+    let kv = state.kv_sessions();
+    let mut watcher = kv.watch(">").await?;
+    while let Some(event) = watcher.next().await {
+        match event {
+            Ok(event) => {
+                let session_id = event.key;
+                if event.operation == Operation::Delete {
+                    info!(
+                        "active_connection deleted, deleting session {session_id}.  {:?}",
+                        event
+                    );
+                    session_delete(state.configuration(), session_id.as_str())
+                        .await
+                        .expect("Failed to delete session");
+                }
+                if event.operation == Operation::Put {
+                    info!("New Session put {session_id} {event:?}");
+                }
+            }
+            Err(e) => {
+                warn!("KV event error watching for session cleanup: {:?}", e);
+            }
+        }
+    }
     Ok(())
 }
 
