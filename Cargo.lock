@@ -2680,9 +2680,8 @@ dependencies = [
 
 [[package]]
 name = "lightyear"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc3129ca879c52b7e814b7af6f7e1586c771a043ec90761e71d4322a65822848"
+version = "0.17.0"
+source = "git+https://github.com/cBournhonesque/lightyear.git#a7aed471ee6e35e937cfa6ff3b6baec1d245fc05"
 dependencies = [
  "async-channel",
  "async-compat",
@@ -2719,9 +2718,8 @@ dependencies = [
 
 [[package]]
 name = "lightyear_macros"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d3c55652a5c1c3aaaa8c673b6559053a4c559474b7ae77d34327a444e99c02f"
+version = "0.17.0"
+source = "git+https://github.com/cBournhonesque/lightyear.git#a7aed471ee6e35e937cfa6ff3b6baec1d245fc05"
 dependencies = [
  "proc-macro2",
  "quote",
