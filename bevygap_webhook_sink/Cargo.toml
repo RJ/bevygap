@@ -1,0 +1,18 @@
+[package]
+name = "bevygap_webhook_sink"
+version.workspace = true
+authors.workspace = true
+publish.workspace = true
+edition.workspace = true
+
+[dependencies]
+axum = "0.7.7"
+tokio.workspace = true
+log.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+bevygap_shared = { path = "../bevygap_shared" }
+anyhow = "1.0"
+
+[lints]
+workspace = true

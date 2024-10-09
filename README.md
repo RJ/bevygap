@@ -34,6 +34,10 @@ Clients wishing to connect to the game make a request to our matchmaker service,
 An http endpoint to make "i want to play" requests to the matchmaker.
 The matchmaker itself only exposes a service to NATS, not http.
 
+### bevygap_webhook_sink
+
+Listens for webhooks and writes to NATS. Edgegap can send webhooks for session and deployment events.
+
 ### bevygap_gameserver
 
 A bevy plugin for the gameserver, which loads its deployment context from the edgegap API on boot,
