@@ -7,4 +7,5 @@ pub mod prelude {
     pub use crate::arbitrium_env::ArbitriumEnv;
     pub use crate::edgegap_context_plugin::ArbitriumContext;
     pub use crate::plugin::BevygapGameserverPlugin;
+    pub use crate::plugin::BevygapReady;
 }

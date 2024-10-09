@@ -14,7 +14,7 @@ use lightyear::connection::netcode::ClientId;
 use lightyear::server::events::{ConnectEvent, DisconnectEvent};
 
 use crate::arbitrium_env::ArbitriumEnv;
-use crate::edgegap_context_plugin::{ArbitriumContext, EdgegapContextPlugin};
+use crate::edgegap_context_plugin::ArbitriumContext;
 
 /// Plugin for gameservers that run on edgegap.
 #[derive(Default)]
@@ -22,6 +22,9 @@ pub struct BevygapGameserverPlugin {
     /// if true, use mock envs instead of reading Arbitrium ones.
     pub mock_env: bool
 }
+
+#[derive(Event)]
+pub struct BevygapReady;
 
 impl Plugin for BevygapGameserverPlugin {
     fn build(&self, app: &mut App) {
@@ -70,10 +73,11 @@ fn handle_lightyear_client_connect(
 
 }
 
-fn context_added(context: Res<ArbitriumContext>, nats_sender: ResMut<NatsSender>) {
+fn context_added(context: Res<ArbitriumContext>, nats_sender: ResMut<NatsSender>, mut commands: Commands) {
     info!("CONTEXT added: {context:?}");
     info!("CONTEXT fqdn: {}", context.fqdn());
     nats_sender.arbitrium_context(context.clone());
+    commands.trigger(BevygapReady);
 }
 
 #[derive(Debug, Event)]
