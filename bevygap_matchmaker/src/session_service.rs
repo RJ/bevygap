@@ -78,20 +78,18 @@ async fn session_cleanup_watcher(state: &MatchmakerState) -> Result<(), async_na
     let kv = state.kv_sessions();
     let mut watcher = kv.watch(">").await?;
     while let Some(event) = watcher.next().await {
+        info!("{event:?}");
         match event {
             Ok(event) => {
                 let session_id = event.key;
                 if event.operation == Operation::Delete {
-                    info!(
-                        "active_connection deleted, deleting session {session_id}.  {:?}",
-                        event
-                    );
+                    info!("active_connection deleted, deleting session {session_id}",);
                     session_delete(state.configuration(), session_id.as_str())
                         .await
                         .expect("Failed to delete session");
                 }
                 if event.operation == Operation::Put {
-                    info!("New Session put {session_id} {event:?}");
+                    info!("New Session put {session_id} ");
                 }
             }
             Err(e) => {
