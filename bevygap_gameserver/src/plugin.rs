@@ -34,62 +34,53 @@ impl Plugin for BevygapGameserverPlugin {
         };
         app.insert_resource(arb_env);
         app.add_plugins(TokioTasksPlugin::default());
-        app.add_plugins(EdgegapContextPlugin);
-
-        app.add_systems(
-            Update,
-            (context_added, setup_nats)
-                .chain()
-                .run_if(resource_added::<ArbitriumContext>),
-        );
-
-        app.add_systems(
-            Update,
-            (
-                handle_lightyear_connect_events,
-                handle_lightyear_disconnect_events,
+        // app.add_plugins(EdgegapContextPlugin);
+        app.add_systems(Startup, setup_nats);
+        app.add_systems(Update, (
+            crate::edgegap_context_plugin::fetch_context.run_if(resource_added::<BevygapNats>),
+            context_added.run_if(resource_added::<ArbitriumContext>),
             )
-            .run_if(resource_exists::<Events<ConnectEvent>>)
-            .run_if(resource_exists::<Events<DisconnectEvent>>),
         );
+
+        app.observe(handle_lightyear_client_connect);
+        app.observe(handle_lightyear_client_disconnect);
+
     }
 }
 
-fn handle_lightyear_disconnect_events(
-    mut events: EventReader<DisconnectEvent>,
+
+// switch to observers for ConnectEvent and DisconnectEvent!
+
+fn handle_lightyear_client_disconnect(
+    trigger: Trigger<DisconnectEvent>,
     nats_sender: ResMut<NatsSender>,
 ) {
-    for ev in events.read() {
-        let client_id = ev.client_id;
-        info!("Lightyear disconnect event for client_id {}", client_id);
-        nats_sender.client_disconnected(client_id.to_bits());
-    }
+    let client_id = trigger.event().client_id;
+    info!("Lightyear disconnect event for client_id {}", client_id);
+    nats_sender.client_disconnected(client_id.to_bits());
 }
 
-fn handle_lightyear_connect_events(
-    mut events: EventReader<ConnectEvent>,
+fn handle_lightyear_client_connect(
+    trigger: Trigger<ConnectEvent>,
     nats_sender: ResMut<NatsSender>,
 ) {
-    for ev in events.read() {
-        let client_id = ev.client_id;
-        info!("Lightyear connect event for client_id {}", client_id);
-        nats_sender.client_connected(client_id.to_bits());
-    }
+    let client_id = trigger.event().client_id;
+    info!("Lightyear connect event for client_id {}", client_id);
+    nats_sender.client_connected(client_id.to_bits());
+
 }
 
-fn context_added(context: Res<ArbitriumContext>) {
+fn context_added(context: Res<ArbitriumContext>, nats_sender: ResMut<NatsSender>) {
     info!("CONTEXT added: {context:?}");
     info!("CONTEXT fqdn: {}", context.fqdn());
-    // info!("CONTEXT request_id: {}", context.request_id());
-    // info!("CONTEXT location: {}", context.location());
-    // info!("CONTEXT sockets: {}", context.sockets());
-    // info!("CONTEXT public_ip: {}", context.public_ip());
+    nats_sender.arbitrium_context(context.clone());
 }
 
 #[derive(Debug, Event)]
 enum NatsEvent {
     ClientConnected(ClientId),
     ClientDisconnected(ClientId),
+    ArbitriumContext(ArbitriumContext),
 }
 
 #[derive(Resource)]
@@ -109,22 +100,26 @@ impl NatsSender {
             .send(NatsEvent::ClientDisconnected(client_id))
             .expect("Unable to send NatsEvent for client_disconnected")
     }
+
+    fn arbitrium_context(&self, context: ArbitriumContext) {
+        self.0
+            .send(NatsEvent::ArbitriumContext(context))
+            .expect("Unable to send NatsEvent for arbitrium_context")
+    }
 }
 
 fn setup_nats(
     runtime: ResMut<TokioTasksRuntime>,
-    arb_context: Res<ArbitriumContext>,
     mut commands: Commands,
 ) {
     info!("Setting up NATS");
-    let arb_context_bytes = arb_context.to_bytes();
 
     let (nats_event_sender, mut nats_event_receiver) =
         tokio::sync::mpsc::unbounded_channel::<NatsEvent>();
     commands.insert_resource(NatsSender(nats_event_sender));
 
-    let fqdn = arb_context.fqdn();
-    let nats_key = fqdn.replace('.', "_");
+    // let fqdn = arb_context.fqdn();
+    let nats_key = "somegameserver".to_string(); // fqdn.replace('.', "_");
 
     // this probably isn't ideal, but i need panics from tokio tasks to 
     // kill the process.
@@ -142,19 +137,22 @@ fn setup_nats(
                 panic!("Failed to setup NATS");
             }
         };
+        info!("NATS connected");
         // let server_kv = nats.server_kv.clone();
         // let server_key = nats.server_key.clone();
         
         let kv_c2s = bgnats.kv_c2s().clone();
         let kv_sessions = bgnats.kv_sessions().clone();
 
-        // Write our context to nats to announce our presence.
-        bgnats.client()
-            .publish("gameserver.contexts", arb_context_bytes.into())
-            .await
-            .expect("Failed to write context to NATS");
+        // // Write our context to nats to announce our presence.
+        // bgnats.client()
+        //     .publish("gameserver.contexts", arb_context_bytes.into())
+        //     .await
+        //     .expect("Failed to write context to NATS");
 
-        bgnats.client().flush().await.expect("Failed to flush NATS");
+        // bgnats.client().flush().await.expect("Failed to flush NATS");
+
+        let client = bgnats.client().clone();
 
         ctx.run_on_main_thread(move |ctx| {
             ctx.world.insert_resource(bgnats);
@@ -202,7 +200,18 @@ fn setup_nats(
                         .await
                         .expect("Failed to del client_id in KV");
                 }
+                NatsEvent::ArbitriumContext(context) => {
+                    info!("ArbitriumContext added: {context:?}");
+                    let arb_context_bytes = context.to_bytes();
+                    // TODO nats key should be on the subject?
+                    client
+                        .publish("gameserver.contexts", arb_context_bytes.into())
+                        .await
+                        .expect("Failed to write context to NATS");
+
+                }
             }
+            client.flush().await.expect("Failed to flush NATS");
         }
     });
 }

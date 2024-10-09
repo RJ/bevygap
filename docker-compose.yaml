@@ -12,6 +12,17 @@ services:
       - ./nats-config:/config
       - ./nats-data:/data
 
+  httpd:
+    image: bevygap_httpd:latest
+    build:
+      context: .
+      dockerfile: ./bevygap_httpd/Dockerfile
+    depends_on:
+      - nats
+      - matchmaker
+    env_file:
+      - .matchmaker.env
+
   matchmaker:
     image: matchmaker:latest
     build:

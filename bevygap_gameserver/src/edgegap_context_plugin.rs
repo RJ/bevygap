@@ -85,10 +85,10 @@ async fn fetch_context_from_api(
     })
 }
 
-fn fetch_context(runtime: ResMut<TokioTasksRuntime>, arb_env: Res<ArbitriumEnv>) {
-    info!("Fetching context...");
+pub fn fetch_context(runtime: ResMut<TokioTasksRuntime>, arb_env: Res<ArbitriumEnv>) {
     let context_url = arb_env.context_url.clone();
     let context_token = arb_env.context_token.clone();
+    info!("Fetching context: {context_url} ::::  {context_token}");
 
     runtime.spawn_background_task(|mut ctx| async move {
         let arb_context = fetch_context_from_api(&context_url, &context_token)
