@@ -5,3 +5,4 @@
 config
 nats-config
 nats-data
+.DS_Store
