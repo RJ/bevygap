@@ -33,9 +33,7 @@ async fn main() {
         .with_state(app_state);
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3001")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3001").await.unwrap();
     info!(
         "bevygap_webhook_sink listening on {}",
         listener.local_addr().unwrap()

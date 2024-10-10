@@ -15,3 +15,5 @@ COPY --from=build-env /app/target/release/bevygap_webhook_sink /app/
 WORKDIR /app
 
 ENTRYPOINT ["./bevygap_webhook_sink"]
+
+EXPOSE 3001/tcp
