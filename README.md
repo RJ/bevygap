@@ -123,3 +123,26 @@ Check gameserver(s) connected to nats:
 ```
 nats server report connections
 ```
+
+## Timeouts
+
+When there are no deployments, or nothing suitable, it takes too long to return a ready session,
+so the game client http req times out. ideally need to stream status updates to game client?
+
+<pre>
+GET SESSION... (1)    
+2024-10-09T14:03:25.069729Z  INFO bevygap_matchmaker::session_service: SessionGet { session_id: "a1cb46bc7f15-S", custom_id: None, status: "Seeking", ready: false, linked: false, kind: "Seat", user_count: 1, app_version: 55039, create_time: "2024-10-09 14:03:24.975285", elapsed: 0, error: None, session_users: Some([SessionUser { ip: "81.128.xx", latitude: Some(53.1651), longitude: Some(-1.482) }]), session_ips: None, deployment: None, webhook_url: None }    
+
+2024-10-09T14:03:38.642584Z  INFO bevygap_matchmaker: NEW GAMESERVER: Message { subject: Subject { bytes: b"gameserver.contexts" }, reply: None, payload: b"{\"fqdn\":\"835d0d69f2fc.pr.edgegap.net\",\"location\":{\"administrative_division\":\"North Holland\",\"city\":\"Amsterdam\",\"continent\":\"Europe\",\"country\":\"Netherlands\",\"latitude\":51.9688,\"longitude\":4.7688,\"timezone\":\"Central European Time\"},\"ports\":{\"server port\":{\"external\":30898,\"internal\":5420,\"link\":\"835d0d69f2fc.pr.edgegap.net:30898\",\"name\":\"server port\",\"protocol\":\"UDP\",\"proxy\":null,\"tls_upgrade\":false}},\"public_ip\":\"172.235.165.125\",\"ready\":false,\"request_id\":\"835d0d69f2fc\",\"sockets\":10,\"sockets_usage\":0,\"status\":\"Status.DEPLOYING\",\"whitelisting_active\":false}", headers: None, status: None, description: None, length: 581 }    
+
+2024-10-09T14:06:45.071178Z  INFO bevygap_matchmaker::session_service: GET SESSION... (2)    
+
+2024-10-09T14:06:45.729178Z  INFO bevygap_matchmaker::session_service: SessionGet { session_id: "a1cb46bc7f15-S", custom_id: None, status: "Ready", ready: true, linked: true, kind: "Seat", user_count: 1, app_version: 55039, create_time: "2024-10-09 14:03:24.975285", elapsed: 201, error: None, session_users: Some([SessionUser { ip: "81.128.xx", latitude: Some(53.1651), longitude: Some(-1.482) }]), session_ips: None, deployment: Some(Deployment { request_id: "835d0d69f2fc", public_ip: "172.235.165.125", status: "Status.READY", ready: true, whitelisting_active: false, fqdn: "835d0d69f2fc.pr.edgegap.net", ports: Some({"server port": PortMapping { external: Some(30898), internal: Some(5420), protocol: Some("UDP"), name: Some("server port"), tls_upgrade: Some(false), link: Some("835d0d69f2fc.pr.edgegap.net:30898"), proxy: None }}), location: None, tags: None, sockets: None, sockets_usage: None, is_joinable_by_session: None }), webhook_url: None }    
+
+2024-10-09T14:06:45.729231Z  INFO bevygap_matchmaker::session_service: SessionGet { session_id: "a1cb46bc7f15-S", custom_id: None, status: "Ready", ready: true, linked: true, kind: "Seat", user_count: 1, app_version: 55039, create_time: "2024-10-09 14:03:24.975285", elapsed: 201, error: None, session_users: Some([SessionUser { ip: "81.128.xx", latitude: Some(53.1651), longitude: Some(-1.482) }]), session_ips: None, deployment: Some(Deployment { request_id: "835d0d69f2fc", public_ip: "172.235.165.125", status: "Status.READY", ready: true, whitelisting_active: false, fqdn: "835d0d69f2fc.pr.edgegap.net", ports: Some({"server port": PortMapping { external: Some(30898), internal: Some(5420), protocol: Some("UDP"), name: Some("server port"), tls_upgrade: Some(false), link: Some("835d0d69f2fc.pr.edgegap.net:30898"), proxy: None }}), location: None, tags: None, sockets: None, sockets_usage: None, is_joinable_by_session: None }), webhook_url: None }    
+
+2024-10-09T14:06:45.729881Z  INFO bevygap_matchmaker::session_service: client_id = 12894362149030772046    
+
+2024-10-09T14:06:45.730154Z  INFO bevygap_matchmaker::session_service: 🏠 BUILD ConnectToken: server_addresses = 172.235.165.125:30898 proto id: 1982, client_id: 12894362149030772046, privkey: [xxx]    
+2024-10-09T14:06:45.784967Z  INFO bevygap_matchmaker::session_service: Stored token for session a1cb46bc7f15-S in NATS KV    
+</pre>

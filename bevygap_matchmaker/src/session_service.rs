@@ -206,6 +206,8 @@ async fn session_responder(
                 ))
             })?;
 
+        info!("{session_get:?}");
+
         if session_get.ready {
             break;
         }
