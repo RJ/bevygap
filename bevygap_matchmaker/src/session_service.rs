@@ -15,6 +15,7 @@ struct SessionRequest {
     /// the ip of the client that wants a session
     client_ip: String,
     /// the rest of the request, with no fixed schema.
+    #[allow(dead_code)]
     obj: serde_json::Map<String, serde_json::Value>,
 }
 
@@ -23,16 +24,14 @@ struct SessionResponse {
     connect_token: String,
     gameserver_ip: String,
     gameserver_port: u16,
-    link: String,
 }
 
 impl std::fmt::Display for SessionResponse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "SessionResponse {{ connect_token: [{} bytes], link: {} }}",
-            self.connect_token.len(),
-            self.link,
+            "SessionResponse {{ connect_token: [{} bytes] }}",
+            self.connect_token.len()
         )
     }
 }
@@ -185,11 +184,27 @@ async fn session_responder(
 
     let mut session_model = SessionModel::new(state.settings.app_name.clone());
     session_model.ip_list = Some(vec![session_request.client_ip.to_string()]);
-
+    session_model
+        .webhook_url
+        .clone_from(&state.settings.session_webhook_url);
     // create session via edgegap api:
     let post_session = session_post(state.configuration(), session_model).await?;
 
     info!("{post_session:?}");
+
+    /*
+       session creation sometimes is status=ready on the first request, if the was a suitable deployment
+       but sometimes is Waiting.. for a couple of secs until deployment finishes.
+
+       seems to usually be fast enough that we can just block here even if deploying..
+
+       webhook sends to "webhook.session" any session callback like this:
+       {"session_id": "950dd2eaff09-S", "status": "Ready", "ready": true, "kind": "Seat",
+        "user_count": 1, "linked": true, "webhook_url": "https://example.com/hook/session",
+         "deployment_request_id": "57f84a8e1298"}
+       so perhaps we should just watch a KV value for the session, and update it with polling and from
+       the webhook, whichever happens first, then reply to the client.
+    */
 
     let mut session_get;
     let mut tries = 0;
@@ -219,10 +234,10 @@ async fn session_responder(
             )));
         }
 
-        tokio::time::sleep(tokio::time::Duration::from_secs(200)).await;
+        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
     }
 
-    info!("{session_get:?}");
+    // info!("{session_get:?}");
 
     // We must wait until the session is ready / linked before telling the client to connect.
     // You can ask for a webhook, but for now we just poll until it's ready.
@@ -311,7 +326,6 @@ async fn session_responder(
 
     let resp = SessionResponse {
         connect_token: token_base64,
-        link: format!("{}:{port}", deployment.public_ip),
         gameserver_ip: deployment.public_ip,
         gameserver_port: port as u16,
     };

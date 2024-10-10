@@ -19,7 +19,7 @@ use crate::edgegap_context_plugin::ArbitriumContext;
 
 /// Plugin for gameservers that run on edgegap.
 #[derive(Default)]
-pub struct BevygapGameserverPlugin {
+pub struct BevygapServerPlugin {
     /// if true, use mock envs instead of reading Arbitrium ones.
     pub mock_env: bool,
 }
@@ -27,9 +27,9 @@ pub struct BevygapGameserverPlugin {
 #[derive(Event)]
 pub struct BevygapReady;
 
-impl Plugin for BevygapGameserverPlugin {
+impl Plugin for BevygapServerPlugin {
     fn build(&self, app: &mut App) {
-        info!("BevygapGameserverPlugin::build");
+        info!("BevygapServerPlugin::build");
         let arb_env = if self.mock_env {
             info!("Reading MOCK Arbitrium ENVs");
             ArbitriumEnv::from_example()
@@ -124,9 +124,6 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
         tokio::sync::mpsc::unbounded_channel::<NatsEvent>();
     commands.insert_resource(NatsSender(nats_event_sender));
 
-    // let fqdn = arb_context.fqdn();
-    let nats_key = "somegameserver".to_string(); // fqdn.replace('.', "_");
-
     // this probably isn't ideal, but i need panics from tokio tasks to
     // kill the process.
     let default_panic = std::panic::take_hook();
@@ -136,7 +133,7 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
     }));
 
     runtime.spawn_background_task(|mut ctx| async move {
-        let bgnats = match BevygapNats::new_and_connect(nats_key.as_str()).await {
+        let bgnats = match BevygapNats::new_and_connect("bevygap_server_plugin").await {
             Ok(nats) => nats,
             Err(e) => {
                 error!("Failed to setup NATS: {}", e);
@@ -144,19 +141,9 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
             }
         };
         info!("NATS connected");
-        // let server_kv = nats.server_kv.clone();
-        // let server_key = nats.server_key.clone();
 
         let kv_c2s = bgnats.kv_c2s().clone();
         let kv_sessions = bgnats.kv_sessions().clone();
-
-        // // Write our context to nats to announce our presence.
-        // bgnats.client()
-        //     .publish("gameserver.contexts", arb_context_bytes.into())
-        //     .await
-        //     .expect("Failed to write context to NATS");
-
-        // bgnats.client().flush().await.expect("Failed to flush NATS");
 
         let client = bgnats.client().clone();
 

@@ -67,7 +67,17 @@ async fn wannaplay_handler(
     Query(params): Query<WannaplayParams>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
-    let client_ip = params.client_ip.unwrap_or(addr.ip().to_string());
+    let mut client_ip = params.client_ip.unwrap_or(addr.ip().to_string());
+    // TODO might need to grab X-Forwarded-For header and use that if available?
+    //      (once this is deployed behind a proxy)
+    if client_ip == "127.0.0.1" || client_ip == "::1" {
+        // localhost tends to spawn deployments in random places..
+        warn!(
+            "Client IP requesting matchmaking is localhost, replacing with an IP in United Kingdom 🤷‍♂️ 🇬🇧 "
+        );
+        client_ip = "81.128.157.100".to_string();
+    }
+
     info!("wannaplay_handler req for ip {client_ip}");
     let payload = format!("{{\"client_ip\":\"{client_ip}\"}}");
     let resp = state
@@ -76,7 +86,7 @@ async fn wannaplay_handler(
         .request("session.gensession", payload.into())
         .await?;
 
-    info!("Got mm response: {:?}", resp);
+    info!("Got matchmaker response: {:?}", resp);
     // resp.payload
     let reply = ([(header::CONTENT_TYPE, "text/json")], resp.payload);
     Ok(reply)

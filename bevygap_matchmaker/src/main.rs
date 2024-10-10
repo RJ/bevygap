@@ -40,6 +40,10 @@ pub struct Settings {
     /// The lightyear protocol id (u64)
     #[arg(long, default_value = "1982")]
     lightyear_protocol_id: u64,
+    /// The webhook url for edgegap session creation events
+    /// (should write to nats for you, see bevygap_webhook_sink)
+    #[arg(long, default_value = None)]
+    session_webhook_url: Option<String>,
 }
 
 impl Settings {

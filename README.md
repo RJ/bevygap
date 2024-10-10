@@ -29,16 +29,22 @@ Clients wishing to connect to the game make a request to our matchmaker service,
   (the gameserver ip+port will be a machine controlled by Edgegap, running your game server's docker image)
 * Deletes edgegap sessions when clients disconnect, by watching `active_connections` in NATS KV
 
-### bevygap_httpd (TODO)
+### bevygap_httpd
 
 An http endpoint to make "i want to play" requests to the matchmaker.
 The matchmaker itself only exposes a service to NATS, not http.
 
 ### bevygap_webhook_sink
 
-Listens for webhooks and writes to NATS. Edgegap can send webhooks for session and deployment events.
+Listens for webhooks on http, and writes to NATS. Edgegap can send webhooks for session and deployment events.
 
-### bevygap_gameserver
+### bevygap_client_plugin
+
+A bevy plugin for the game client, to replace the normal lightyear `commands.connect_client()` call.
+The new `commands.bevygap_connect_client()` function will make a request to the matchmaker, then modify lightyear's config to set the supplied
+game server socket address and connect token, then call `commands.connect_client()` for you.
+
+### bevygap_server_plugin
 
 A bevy plugin for the gameserver, which loads its deployment context from the edgegap API on boot,
 and connects to our NATS instance in order to lookup session information. Your gameserver should
