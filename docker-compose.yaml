@@ -28,7 +28,7 @@ services:
     build:
       context: .
       dockerfile: ./bevygap_matchmaker/Dockerfile
-    command: --app-name spacepit_server --app-version v0.0.1 --deployment-id dfb7d1868c7f
+    command: --app-name spacepit_server --app-version v0.0.1
     volumes:
       - ./config:/config
     depends_on:

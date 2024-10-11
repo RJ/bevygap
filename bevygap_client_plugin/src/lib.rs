@@ -122,6 +122,7 @@ fn handle_matchmaker_response(
         info!("Got matchmaker response, game server: {server_addr:?}");
 
         if let NetConfig::Netcode { auth, io, .. } = &mut client_config.net {
+            info!("Setting Netcode connect token and server addr");
             *auth = Authentication::Token(connect_token);
             // inject gameserver address and port into lightyear client transport
             // (preserves existing client_addr if it was already set)
@@ -135,6 +136,8 @@ fn handle_matchmaker_response(
                 #[cfg(target_family = "wasm")]
                 certificate_digest: CERTIFICATE_DIGEST.to_string().replace(":", ""),
             };
+        } else {
+            panic!("Unsupported netconfig, only supports Netcode for now.");
         }
         next_state.set(BevygapClientState::ReadyToConnect);
     }

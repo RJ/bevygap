@@ -127,3 +127,14 @@ nats server report connections
 Is "unfinished".. 
 
 I'm polling on session creation before replying to the mm request, and it never took more than 3 seconds so far, even when deploying a new server, so i've not bothered handling timeouts properly yet.
+
+## NOTES / TODO
+
+probably want to prefix all NATS subjects/buckets with the edgegap app name or something, so that
+multiple apps on edgegap can share the nats instance without conflicts.
+
+should probably be restricted by the nats creds
+
+
+need to split LY's spaceships into own repo with separate crates, containerise the server,
+add the bevygap stuff, demonstrate the whole deal.
