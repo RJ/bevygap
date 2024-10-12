@@ -52,6 +52,7 @@ base64 = "0.22"
 # edgegap = {path = "./edgegap-client"}
 url = "^2.5"
 reqwest = { version = "^0.12", features = ["json", "multipart"] }
+tower-http = {version = "0.6.1", default-features = false, features = ["cors"]}
 
 [workspace.lints.clippy]
 type_complexity = "allow"

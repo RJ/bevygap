@@ -1,5 +1,5 @@
 use axum::extract::State;
-use axum::http::header;
+use axum::http::{header, Method};
 use axum::{
     extract::ConnectInfo,
     extract::Query,
@@ -15,6 +15,7 @@ use serde::{de, Deserialize, Deserializer};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::{fmt, str::FromStr};
+use tower_http::cors::{Any, CorsLayer};
 use tracing_subscriber::{layer::*, util::*};
 
 struct AppState {
@@ -28,10 +29,16 @@ async fn main() {
     let bgnats = BevygapNats::new_and_connect("bevygap_httpd").await.unwrap();
     let app_state = Arc::new(AppState { bgnats });
 
+    let wannaplay_cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        // .allow_origin("http://example.com".parse::<HeaderValue>().unwrap())
+        .allow_origin(Any);
+
     // build our application with a route
     let app = Router::new()
         .route("/", get(index_handler))
         .route("/wannaplay", get(wannaplay_handler))
+        .layer(wannaplay_cors)
         .with_state(app_state);
 
     // run it
