@@ -40,6 +40,7 @@ pub enum BevygapClientState {
 pub struct BevygapClientConfig {
     pub wannaplay_url: String,
     pub fake_client_ip: Option<String>,
+    pub certificate_digest: String,
 }
 
 impl Default for BevygapClientConfig {
@@ -47,6 +48,7 @@ impl Default for BevygapClientConfig {
         Self {
             wannaplay_url: "http://127.0.0.1:3000/wannaplay".to_string(),
             fake_client_ip: None,
+            certificate_digest: "".to_string(),
         }
     }
 }
@@ -91,12 +93,19 @@ fn request_token(
     next_state.set(BevygapClientState::AwaitingResponse);
 }
 
+#[allow(unused_variables)]
 fn handle_matchmaker_response(
     mut ev_response: ResMut<Events<TypedResponse<SessionResponse>>>,
     mut ev_response_error: ResMut<Events<TypedResponseError<SessionResponse>>>,
     mut client_config: ResMut<ClientConfig>,
     mut next_state: ResMut<NextState<BevygapClientState>>,
+    config: Res<BevygapClientConfig>,
 ) {
+    info!(
+        "Using cert digest {}",
+        config.certificate_digest.replace(":", "")
+    );
+
     for response_error in ev_response_error.drain() {
         error!("Matchmaker request error: {:?}", response_error);
         next_state.set(BevygapClientState::Error);
@@ -134,7 +143,7 @@ fn handle_matchmaker_response(
                 client_addr: *client_addr,
                 server_addr,
                 #[cfg(target_family = "wasm")]
-                certificate_digest: CERTIFICATE_DIGEST.to_string().replace(":", ""),
+                certificate_digest: config.certificate_digest.replace(":", ""),
             };
         } else {
             panic!("Unsupported netconfig, only supports Netcode for now.");
