@@ -2824,7 +2824,7 @@ dependencies = [
 [[package]]
 name = "lightyear"
 version = "0.17.0"
-source = "git+https://github.com/cBournhonesque/lightyear.git?rev=a7aed471ee6e35e937cfa6ff3b6baec1d245fc05#a7aed471ee6e35e937cfa6ff3b6baec1d245fc05"
+source = "git+https://github.com/cBournhonesque/lightyear.git?rev=0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98#0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98"
 dependencies = [
  "async-channel",
  "async-compat",
@@ -2862,13 +2862,13 @@ dependencies = [
  "web-sys",
  "wtransport",
  "xwt-core",
- "xwt-web-sys",
+ "xwt-web",
 ]
 
 [[package]]
 name = "lightyear_macros"
 version = "0.17.0"
-source = "git+https://github.com/cBournhonesque/lightyear.git?rev=a7aed471ee6e35e937cfa6ff3b6baec1d245fc05#a7aed471ee6e35e937cfa6ff3b6baec1d245fc05"
+source = "git+https://github.com/cBournhonesque/lightyear.git?rev=0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98#0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5844,10 +5844,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e003285401374e0eb07a563d78bc4d79402482df5228c304829c36888a54aaed"
 
 [[package]]
-name = "xwt-web-sys"
+name = "xwt-web"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79ffc8c1965c8f07376f9422e4756bd2681eb68466b36ed6fbf9099c123a9056"
+checksum = "b3a769f96571f575d3db9973a68f5f2f3350e43d3b2dc3b66d2eaffd74d80f3d"
 dependencies = [
  "js-sys",
  "tokio",

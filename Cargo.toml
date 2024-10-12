@@ -45,9 +45,8 @@ futures-util = { version = "0.3", default-features = false, features = ["sink", 
 tokio = { version = "1.0", features = ["full"] }
 tokio-tungstenite = "0.23"
 clap = { version = "4.4", features = ["derive"] }
-#lightyear = {version = "0.17.1", default-features = false}
 # same LY ver as game:
-lightyear = {git = "https://github.com/cBournhonesque/lightyear.git", rev = "a7aed471ee6e35e937cfa6ff3b6baec1d245fc05", default-features = false}
+lightyear = {git = "https://github.com/cBournhonesque/lightyear.git", rev = "0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98", default-features = false}
 
 base64 = "0.22"
 # edgegap = {path = "./edgegap-client"}
