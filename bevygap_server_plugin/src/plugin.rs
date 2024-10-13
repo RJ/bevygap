@@ -22,7 +22,21 @@ use crate::edgegap_context_plugin::ArbitriumContext;
 pub struct BevygapServerPlugin {
     /// if true, use mock envs instead of reading Arbitrium ones.
     pub mock_env: bool,
+    /// Certificate digest, for self-signed certs
+    pub cert_digest: String,
 }
+
+impl BevygapServerPlugin {
+    pub fn self_signed_digest(cert_digest: String) -> Self {
+        Self {
+            cert_digest,
+            ..Default::default()
+        }
+    }
+}
+
+#[derive(Resource)]
+struct CertDigest(String);
 
 #[derive(Event)]
 pub struct BevygapReady;
@@ -38,6 +52,7 @@ impl Plugin for BevygapServerPlugin {
             ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs")
         };
         app.insert_resource(arb_env);
+        app.insert_resource(CertDigest(self.cert_digest.clone()));
         app.add_plugins(TokioTasksPlugin::default());
         // app.add_plugins(EdgegapContextPlugin);
         app.add_systems(Startup, setup_nats);
@@ -78,9 +93,11 @@ fn context_added(
     context: Res<ArbitriumContext>,
     nats_sender: ResMut<NatsSender>,
     mut commands: Commands,
+    digest: Res<CertDigest>,
 ) {
     info!("CONTEXT added: {context:?}");
     info!("CONTEXT fqdn: {}", context.fqdn());
+    nats_sender.cert_digest(context.public_ip(), digest.0.clone());
     nats_sender.arbitrium_context(context.clone());
     commands.trigger(BevygapReady);
 }
@@ -90,6 +107,7 @@ enum NatsEvent {
     ClientConnected(ClientId),
     ClientDisconnected(ClientId),
     ArbitriumContext(ArbitriumContext),
+    CertDigest(String, String),
 }
 
 #[derive(Resource)]
@@ -114,6 +132,12 @@ impl NatsSender {
         self.0
             .send(NatsEvent::ArbitriumContext(context))
             .expect("Unable to send NatsEvent for arbitrium_context")
+    }
+
+    fn cert_digest(&self, ip: String, digest: String) {
+        self.0
+            .send(NatsEvent::CertDigest(ip, digest))
+            .expect("Unable to send NatsEvent for cert_digest")
     }
 }
 
@@ -144,7 +168,7 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
 
         let kv_c2s = bgnats.kv_c2s().clone();
         let kv_sessions = bgnats.kv_sessions().clone();
-
+        let kv_cert_digests = bgnats.kv_cert_digests().clone();
         let client = bgnats.client().clone();
 
         ctx.run_on_main_thread(move |ctx| {
@@ -204,6 +228,15 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
                         .publish("gameserver.contexts", arb_context_bytes.into())
                         .await
                         .expect("Failed to write context to NATS");
+                }
+                NatsEvent::CertDigest(ip, digest) => {
+                    // TODO need cleanup when a deployment terminates, remove keys
+                    info!("CertDigest added: {ip} -> {digest}");
+                    let key = ip;
+                    kv_cert_digests
+                        .put(key, digest.into())
+                        .await
+                        .expect("Failed to put digest in KV");
                 }
             }
             client.flush().await.expect("Failed to flush NATS");

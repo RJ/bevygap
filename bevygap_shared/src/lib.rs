@@ -11,6 +11,7 @@ pub struct BevygapNats {
     client: Client,
     kv_s2c: jetstream::kv::Store,
     kv_c2s: jetstream::kv::Store,
+    kv_cert_digests: jetstream::kv::Store,
     kv_sessions: jetstream::kv::Store,
 }
 
@@ -20,10 +21,12 @@ impl BevygapNats {
         let client = Self::connect_to_nats(nats_client_name).await?;
         let (kv_s2c, kv_c2s) = Self::create_kv_buckets_for_session_mappings(client.clone()).await?;
         let kv_sessions = Self::create_kv_sessions(client.clone()).await?;
+        let kv_cert_digests = Self::create_kv_cert_digests(client.clone()).await?;
         Ok(Self {
             client,
             kv_s2c,
             kv_c2s,
+            kv_cert_digests,
             kv_sessions,
         })
     }
@@ -39,6 +42,9 @@ impl BevygapNats {
     }
     pub fn kv_sessions(&self) -> &jetstream::kv::Store {
         &self.kv_sessions
+    }
+    pub fn kv_cert_digests(&self) -> &jetstream::kv::Store {
+        &self.kv_cert_digests
     }
 
     async fn connect_to_nats(nats_client_name: &str) -> Result<Client, async_nats::Error> {
@@ -85,6 +91,22 @@ impl BevygapNats {
         Ok(kv)
     }
 
+    pub async fn create_kv_cert_digests(
+        client: Client,
+    ) -> Result<jetstream::kv::Store, async_nats::Error> {
+        let jetstream = jetstream::new(client);
+        let kv = jetstream
+            .create_key_value(async_nats::jetstream::kv::Config {
+                bucket: "cert_digests".to_string(),
+                description: "Maps server public ip to their self-signed cert digests".to_string(),
+                max_age: Duration::from_secs(86400 * 14),
+                max_value_size: 1024,
+                ..Default::default()
+            })
+            .await?;
+        Ok(kv)
+    }
+
     /// Creates two buckets for mapping between LY client ids and Edgegap session tokens
     async fn create_kv_buckets_for_session_mappings(
         client: Client,
@@ -98,7 +120,7 @@ impl BevygapNats {
                 max_value_size: 1024,
                 // shouldn't need long for the client to receive token, and make connection to gameserver.
                 max_age: Duration::from_millis(30000),
-                storage: StorageType::Memory,
+                // storage: StorageType::File,
                 ..Default::default()
             })
             .await?;
@@ -110,7 +132,7 @@ impl BevygapNats {
                 max_value_size: 1024,
                 // shouldn't need long for the client to receive token, and make connection to gameserver.
                 max_age: Duration::from_millis(30000),
-                storage: StorageType::Memory,
+                // storage: StorageType::File,
                 ..Default::default()
             })
             .await?;
