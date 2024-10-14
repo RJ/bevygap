@@ -152,3 +152,8 @@ Chrome can't do CORS to http://localhost from http://lan-machine it seems, lan-m
 https://stackoverflow.com/questions/66534759/cors-error-on-request-to-localhost-dev-server-from-remote-site
 
 Access to fetch at 'http://127.0.0.1:3000/wannaplay' from origin 'http://lan-machine:8008' has been blocked by CORS policy: The request client is not a secure context and the resource is in more-private address space `local`.
+
+## TODO
+
+The client needs to be configured with the path to the matchmaker_httpd endpoint.
+Possibly defaulting to /matchmaker/* on current domain? 

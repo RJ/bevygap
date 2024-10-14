@@ -1,4 +1,4 @@
-name: Publish matchmaker image
+name: Dockerize matchmaker service
 
 on:
   # Trigger this workflow when a tag is pushed in the format `v1.2.3`.

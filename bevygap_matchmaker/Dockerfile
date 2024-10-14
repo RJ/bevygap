@@ -11,7 +11,6 @@ RUN cargo build --release -p bevygap_matchmaker
 # the :debug version includes a busybox shell
 FROM gcr.io/distroless/cc-debian12:debug
 COPY --from=build-env /app/target/release/bevygap_matchmaker /app/
-COPY --from=build-env /app/config /config/
 
 WORKDIR /app
 

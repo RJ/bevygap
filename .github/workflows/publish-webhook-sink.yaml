@@ -1,4 +1,4 @@
-name: Publish webhook image
+name: Dockerize webhook_sink
 
 on:
   # Trigger this workflow when a tag is pushed in the format `v1.2.3`.
