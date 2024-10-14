@@ -228,7 +228,7 @@ async fn session_responder(
             break;
         }
 
-        if tries > 15 {
+        if tries > 25 {
             return Err(EdgegapError::Io(std::io::Error::new(
                 std::io::ErrorKind::Other,
                 "session not ready timeout on tries",
