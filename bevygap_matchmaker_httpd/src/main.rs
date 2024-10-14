@@ -23,8 +23,9 @@ use tracing_subscriber::{layer::*, util::*};
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
 pub struct Settings {
-    /// Comma separated list of allowed CORS origin domains
-    #[arg(long, default_value = "http://localhost:8000,https://www.example.com")]
+    /// Domain to allow CORS access
+    /// (ie, host serving your index.html)
+    #[arg(long, default_value = "http://localhost:8000")]
     cors: String,
 
     /// The ip:port to bind the http listener to
@@ -32,6 +33,7 @@ pub struct Settings {
     bind: String,
 
     /// A fake IP to use instead of the client IP, if the request comes from localhost.
+    ///
     /// This is useful for local development – use your normal IP so that deployments you
     /// trigger are geographically near by.
     ///
@@ -41,12 +43,8 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn allowed_origins(&self) -> Vec<String> {
-        self.cors
-            .split(',')
-            .map(|s| s.trim().to_string())
-            .filter(|x| !x.is_empty())
-            .collect()
+    pub fn allowed_origin(&self) -> String {
+        self.cors.trim().to_string()
     }
 }
 
@@ -68,19 +66,20 @@ async fn main() {
         settings: settings.clone(),
     });
 
-    let allowed_origins = settings.allowed_origins();
-
     info!(
-        "bevygap_matchmaker_httpd CORS allowed origins: {:?}",
-        allowed_origins
+        "bevygap_matchmaker_httpd CORS allowed origin: {:?}",
+        settings.allowed_origin()
     );
-
-    let wannaplay_cors = CorsLayer::new().allow_methods([Method::GET, Method::POST]);
-    let wannaplay_cors = allowed_origins
-        .into_iter()
-        .fold(wannaplay_cors, |acc, origin| {
-            acc.allow_origin(origin.parse::<HeaderValue>().unwrap())
-        });
+    // to support multiple cors origins, we'd need to have a list, and check if the request is from
+    // one of them, if so, return it as the cors header.
+    let wannaplay_cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST])
+        .allow_origin(
+            settings
+                .allowed_origin()
+                .parse::<HeaderValue>()
+                .expect("failed parsing cors domain"),
+        );
 
     // build our application with a route
     let app = Router::new()
