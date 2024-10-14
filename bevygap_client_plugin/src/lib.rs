@@ -18,6 +18,7 @@ struct SessionResponse {
     connect_token: String,
     gameserver_ip: String,
     gameserver_port: u16,
+    cert_digest: String,
 }
 
 #[derive(States, Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
@@ -101,11 +102,6 @@ fn handle_matchmaker_response(
     mut next_state: ResMut<NextState<BevygapClientState>>,
     config: Res<BevygapClientConfig>,
 ) {
-    info!(
-        "Using cert digest {}",
-        config.certificate_digest.replace(":", "")
-    );
-
     for response_error in ev_response_error.drain() {
         error!("Matchmaker request error: {:?}", response_error);
         next_state.set(BevygapClientState::Error);
@@ -113,6 +109,9 @@ fn handle_matchmaker_response(
 
     for response in ev_response.drain() {
         let response = response.into_inner();
+
+        let cert_digest = response.cert_digest.replace(":", "");
+        info!("Using cert digest {cert_digest}");
 
         let tok_bytes = BASE64_STANDARD.decode(&response.connect_token).unwrap();
         assert_eq!(
@@ -143,7 +142,7 @@ fn handle_matchmaker_response(
                 client_addr: *client_addr,
                 server_addr,
                 #[cfg(target_family = "wasm")]
-                certificate_digest: config.certificate_digest.replace(":", ""),
+                certificate_digest: cert_digest,
             };
         } else {
             panic!("Unsupported netconfig, only supports Netcode for now.");

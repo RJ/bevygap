@@ -117,6 +117,9 @@ impl MatchmakerState {
     pub(crate) fn kv_sessions(&self) -> &jetstream::kv::Store {
         self.nats.kv_sessions()
     }
+    pub(crate) fn kv_cert_digests(&self) -> &jetstream::kv::Store {
+        self.nats.kv_cert_digests()
+    }
 }
 
 #[tokio::main]

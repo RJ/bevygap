@@ -138,3 +138,12 @@ should probably be restricted by the nats creds
 
 need to split LY's spaceships into own repo with separate crates, containerise the server,
 add the bevygap stuff, demonstrate the whole deal.
+
+# WebTransport custom certificate requirements
+
+https://w3c.github.io/webtransport/#dom-webtransportoptions-servercertificatehashes
+
+https://w3c.github.io/webtransport/#verify-a-certificate-hash
+
+Strict cert requirements, we autogenerate one on boot and report the digest to the client, so
+as long as the server doesn't stay up for more than 14 days, we're fine.

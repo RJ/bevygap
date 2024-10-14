@@ -24,6 +24,7 @@ struct SessionResponse {
     connect_token: String,
     gameserver_ip: String,
     gameserver_port: u16,
+    cert_digest: String,
 }
 
 impl std::fmt::Display for SessionResponse {
@@ -268,11 +269,24 @@ async fn session_responder(
     let client_id = rand::random();
     info!("client_id = {client_id}");
 
-    let ip = deployment
-        .public_ip
-        .as_str()
+    let public_ip_str = deployment.public_ip.as_str();
+
+    let ip = public_ip_str
         .parse::<std::net::IpAddr>()
         .expect("Failed parsing server ip");
+
+    // TODO once the session is ready, the cert digest should have been reported, but
+    // there is definitely a race here so we should block on it for a second or so?
+    let cert_digest = state
+        .kv_cert_digests()
+        .get(public_ip_str)
+        .await
+        .expect("Failed to get cert digest from KV");
+    let cert_digest = String::from_utf8(cert_digest.unwrap().into())
+        .expect("Failed to convert cert digest to string");
+
+    info!("Got cert digest {cert_digest} for {public_ip_str}");
+
     let server_addresses = SocketAddr::new(ip, port as u16);
 
     info!(
@@ -328,6 +342,7 @@ async fn session_responder(
         connect_token: token_base64,
         gameserver_ip: deployment.public_ip,
         gameserver_port: port as u16,
+        cert_digest,
     };
 
     Ok(resp)

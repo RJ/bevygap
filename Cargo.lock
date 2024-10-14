@@ -1173,6 +1173,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevygap_certgen"
+version = "0.1.0"
+dependencies = [
+ "openssl",
+]
+
+[[package]]
 name = "bevygap_client_plugin"
 version = "0.1.0"
 dependencies = [
