@@ -1,5 +1,5 @@
-use axum::extract::State;
-use axum::http::{header, Method};
+use axum::extract::{Request, State};
+use axum::http::{header, HeaderMap, Method};
 use axum::{
     extract::ConnectInfo,
     extract::Query,
@@ -26,27 +26,28 @@ struct AppState {
 async fn main() {
     setup_logging();
 
-    let bgnats = BevygapNats::new_and_connect("bevygap_httpd").await.unwrap();
+    let bgnats = BevygapNats::new_and_connect("bevygap_matchmaker_httpd")
+        .await
+        .unwrap();
     let app_state = Arc::new(AppState { bgnats });
 
-    let wannaplay_cors = CorsLayer::new()
-        .allow_methods(Any) //[Method::GET, Method::POST])
-        // .allow_origin("http://example.com".parse::<HeaderValue>().unwrap())
-        .allow_origin(Any);
+    // TODO --cors settings.
+    // let wannaplay_cors = CorsLayer::new()
+    //     .allow_methods(Any) //[Method::GET, Method::POST])
+    //     // .allow_origin("http://example.com".parse::<HeaderValue>().unwrap())
+    //     .allow_origin(Any);
 
     // build our application with a route
     let app = Router::new()
         .route("/", get(index_handler))
-        .route("/wannaplay", get(wannaplay_handler))
-        .layer(wannaplay_cors)
+        .route("/matchmaker/wannaplay", get(wannaplay_handler))
+        // .layer(wannaplay_cors)
         .with_state(app_state);
 
     // run it
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     info!(
-        "bevygap_httpdlistening on {}",
+        "bevygap_matchmaker_httpd listening on {}",
         listener.local_addr().unwrap()
     );
 
@@ -73,10 +74,22 @@ async fn wannaplay_handler(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     Query(params): Query<WannaplayParams>,
     State(state): State<Arc<AppState>>,
+    req: Request,
 ) -> Result<impl IntoResponse, AppError> {
+    // client_ip is the one sent to Edgegap, to decide which server to assign the player to.
+    // We use one provided in the qs, otherwise the connecting IP of the http client.
     let mut client_ip = params.client_ip.unwrap_or(addr.ip().to_string());
-    // TODO might need to grab X-Forwarded-For header and use that if available?
-    //      (once this is deployed behind a proxy)
+    // Check for X-Forwarded-For header, since this is probably running behind a proxy
+    if let Some(forwarded_for) = req.headers().get("X-Forwarded-For") {
+        if let Ok(forwarded_ip) = forwarded_for.to_str() {
+            // Use the first IP in the X-Forwarded-For header
+            if let Some(first_ip) = forwarded_ip.split(',').next() {
+                client_ip = first_ip.trim().to_string();
+                info!("Using X-Forwarded-For IP: {}", client_ip);
+            }
+        }
+    }
+
     if client_ip == "127.0.0.1" || client_ip == "::1" {
         // localhost tends to spawn deployments in random places..
         warn!(

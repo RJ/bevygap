@@ -1184,23 +1184,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevygap_httpd"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "bevygap_shared",
- "http-body-util",
- "log",
- "serde",
- "serde_json",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "bevygap_matchmaker"
 version = "0.1.0"
 dependencies = [
@@ -1218,6 +1201,23 @@ dependencies = [
  "serde_json",
  "tokio",
  "tokio-tungstenite",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "bevygap_matchmaker_httpd"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "bevygap_shared",
+ "http-body-util",
+ "log",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
 ]
