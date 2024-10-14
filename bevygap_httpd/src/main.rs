@@ -30,7 +30,7 @@ async fn main() {
     let app_state = Arc::new(AppState { bgnats });
 
     let wannaplay_cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST])
+        .allow_methods(Any) //[Method::GET, Method::POST])
         // .allow_origin("http://example.com".parse::<HeaderValue>().unwrap())
         .allow_origin(Any);
 
