@@ -88,7 +88,7 @@ fn request_token(
     info!("Sending request to matchmaker: {matchmaker_url}");
     ev_request.send(
         HttpClient::new()
-            .get(matchmaker_url)
+            .post(matchmaker_url)
             .with_type::<SessionResponse>(),
     );
     next_state.set(BevygapClientState::AwaitingResponse);

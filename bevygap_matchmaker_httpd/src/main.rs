@@ -1,5 +1,6 @@
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderValue, Method};
+use axum::routing::post;
 use axum::{
     extract::ConnectInfo,
     extract::Query,
@@ -84,7 +85,8 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/", get(index_handler))
-        .route("/matchmaker/wannaplay", get(wannaplay_handler))
+        // this probably warrants a formtoken like system or something too..
+        .route("/matchmaker/wannaplay", post(wannaplay_handler))
         .layer(wannaplay_cors)
         .with_state(app_state);
 
