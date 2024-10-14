@@ -1,5 +1,5 @@
 [workspace]
-members = ["bevygap_matchmaker", "bevygap_server_plugin", "bevygap_shared", "bevygap_httpd", "bevygap_webhook_sink", "bevygap_client_plugin", "bevygap_certgen"]
+members = ["bevygap_matchmaker", "bevygap_server_plugin", "bevygap_shared", "bevygap_httpd", "bevygap_webhook_sink", "bevygap_client_plugin"]
 resolver = "2"
 
 

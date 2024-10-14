@@ -147,3 +147,8 @@ https://w3c.github.io/webtransport/#verify-a-certificate-hash
 
 Strict cert requirements, we autogenerate one on boot and report the digest to the client, so
 as long as the server doesn't stay up for more than 14 days, we're fine.
+
+Chrome can't do CORS to http://localhost from http://lan-machine it seems, lan-machine would need to serve https.
+https://stackoverflow.com/questions/66534759/cors-error-on-request-to-localhost-dev-server-from-remote-site
+
+Access to fetch at 'http://127.0.0.1:3000/wannaplay' from origin 'http://lan-machine:8008' has been blocked by CORS policy: The request client is not a secure context and the resource is in more-private address space `local`.

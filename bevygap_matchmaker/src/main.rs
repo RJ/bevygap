@@ -6,7 +6,7 @@ use async_nats::Client;
 use clap::Parser;
 use edgegap::apis::applications_api::*;
 use edgegap::apis::configuration::*;
-use edgegap::apis::deployments_api::*;
+// use edgegap::apis::deployments_api::*;
 use futures::stream::StreamExt;
 use lightyear::connection::netcode::PRIVATE_KEY_BYTES;
 use log::*;
