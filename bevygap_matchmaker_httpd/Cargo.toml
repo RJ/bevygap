@@ -17,6 +17,7 @@ tracing-subscriber.workspace = true
 bevygap_shared = { path = "../bevygap_shared" }
 anyhow = "1.0"
 tower-http.workspace = true
+clap.workspace = true
 
 [lints]
 workspace = true

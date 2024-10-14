@@ -1,5 +1,5 @@
 use axum::extract::{Request, State};
-use axum::http::{header, HeaderMap, Method};
+use axum::http::{header, HeaderValue, Method};
 use axum::{
     extract::ConnectInfo,
     extract::Query,
@@ -10,42 +10,88 @@ use axum::{
     Router,
 };
 use bevygap_shared::*;
+use clap::Parser;
 use log::*;
 use serde::{de, Deserialize, Deserializer};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::{fmt, str::FromStr};
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::*, util::*};
+
+#[derive(Parser, Debug, Clone)]
+#[command(author, version, about, long_about = None)]
+pub struct Settings {
+    /// Comma separated list of allowed CORS origin domains
+    #[arg(long, default_value = "http://localhost:8000,https://www.example.com")]
+    cors: String,
+
+    /// The ip:port to bind the http listener to
+    #[arg(long, default_value = "0.0.0.0:3000")]
+    bind: String,
+
+    /// A fake IP to use instead of the client IP, if the request comes from localhost.
+    /// This is useful for local development – use your normal IP so that deployments you
+    /// trigger are geographically near by.
+    ///
+    /// The default fake IP is near London, United Kindom.
+    #[arg(long, default_value = "81.128.157.100")]
+    fake_ip: String,
+}
+
+impl Settings {
+    pub fn allowed_origins(&self) -> Vec<String> {
+        self.cors
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|x| !x.is_empty())
+            .collect()
+    }
+}
 
 struct AppState {
     bgnats: BevygapNats,
+    settings: Settings,
 }
 
 #[tokio::main]
 async fn main() {
     setup_logging();
+    let settings = Settings::parse();
 
     let bgnats = BevygapNats::new_and_connect("bevygap_matchmaker_httpd")
         .await
         .unwrap();
-    let app_state = Arc::new(AppState { bgnats });
+    let app_state = Arc::new(AppState {
+        bgnats,
+        settings: settings.clone(),
+    });
 
-    // TODO --cors settings.
-    // let wannaplay_cors = CorsLayer::new()
-    //     .allow_methods(Any) //[Method::GET, Method::POST])
-    //     // .allow_origin("http://example.com".parse::<HeaderValue>().unwrap())
-    //     .allow_origin(Any);
+    let allowed_origins = settings.allowed_origins();
+
+    info!(
+        "bevygap_matchmaker_httpd CORS allowed origins: {:?}",
+        allowed_origins
+    );
+
+    let wannaplay_cors = CorsLayer::new().allow_methods([Method::GET, Method::POST]);
+    let wannaplay_cors = allowed_origins
+        .into_iter()
+        .fold(wannaplay_cors, |acc, origin| {
+            acc.allow_origin(origin.parse::<HeaderValue>().unwrap())
+        });
 
     // build our application with a route
     let app = Router::new()
         .route("/", get(index_handler))
         .route("/matchmaker/wannaplay", get(wannaplay_handler))
-        // .layer(wannaplay_cors)
+        .layer(wannaplay_cors)
         .with_state(app_state);
 
     // run it
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind(settings.bind.as_str())
+        .await
+        .unwrap();
     info!(
         "bevygap_matchmaker_httpd listening on {}",
         listener.local_addr().unwrap()
@@ -90,12 +136,11 @@ async fn wannaplay_handler(
         }
     }
 
+    // TODO this default IP should be configurable too, for easier dev
     if client_ip == "127.0.0.1" || client_ip == "::1" {
         // localhost tends to spawn deployments in random places..
-        warn!(
-            "Client IP requesting matchmaking is localhost, replacing with an IP in United Kingdom 🤷‍♂️ 🇬🇧 "
-        );
-        client_ip = "81.128.157.100".to_string();
+        client_ip = state.settings.fake_ip.to_string();
+        warn!("Using fake IP, request came from localhost: {client_ip}");
     }
 
     info!("wannaplay_handler req for ip {client_ip}");
@@ -103,6 +148,7 @@ async fn wannaplay_handler(
     let resp = state
         .bgnats
         .client()
+        // .request_with_headers(subject, headers, payload)
         .request("session.gensession", payload.into())
         .await?;
 

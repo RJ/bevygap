@@ -1212,6 +1212,7 @@ dependencies = [
  "anyhow",
  "axum",
  "bevygap_shared",
+ "clap",
  "http-body-util",
  "log",
  "serde",

@@ -1,5 +1,4 @@
 use async_nats::jetstream;
-use async_nats::jetstream::stream::StorageType;
 use async_nats::Client;
 use std::time::Duration;
 
