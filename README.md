@@ -32,7 +32,7 @@ Clients wishing to connect to the game make a request to our matchmaker service,
   (the gameserver ip+port will be a machine controlled by Edgegap, running your game server's docker image)
 * Deletes edgegap sessions when clients disconnect, by watching `active_connections` in NATS KV
 
-### bevygap_httpd
+### bevygap_matchmaker_httpd
 
 An http endpoint to make "i want to play" requests to the matchmaker.
 The matchmaker itself only exposes a service to NATS, not http.
