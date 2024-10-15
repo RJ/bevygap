@@ -6,6 +6,9 @@ built with Bevy using the [Lightyear](https://crates.io/crates/lightyear) networ
 The goal is to have an easy-to-deploy system either yourself with docker-compose, or in the cloud,
 to use Edgegap to spin up gameservers on demand. 
 
+My testbed for this is [bevygap-spaceships](https://github.com/RJ/bevygap-spaceships) – a modified
+stand-alone version of the `spaceships` example from the Lightyear repo.
+
 ## Connection flow
 
 * Game client talks to `bevygap_http` by GETting `/wannaplay`, expecting a `ConnectToken` and gameserver `ip:port`.
