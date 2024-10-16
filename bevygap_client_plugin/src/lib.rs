@@ -21,7 +21,7 @@ struct SessionResponse {
     cert_digest: String,
 }
 
-#[derive(States, Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
+#[derive(States, Debug, Clone, Default, Eq, PartialEq, Hash)]
 pub enum BevygapClientState {
     #[default]
     Dormant,
@@ -34,7 +34,7 @@ pub enum BevygapClientState {
     /// We triggered a connection attempt.
     Finished,
     /// The request failed
-    Error,
+    Error(u16, String),
 }
 
 #[derive(Resource, Debug, Clone)]
@@ -104,13 +104,21 @@ fn handle_matchmaker_response(
 ) {
     for response_error in ev_response_error.drain() {
         error!("Matchmaker request error: {:?}", response_error);
-        next_state.set(BevygapClientState::Error);
+        if let Some(r) = response_error.response {
+            let msg = format!("{}\n{}", r.status_text, String::from_utf8_lossy(&r.bytes));
+            next_state.set(BevygapClientState::Error(r.status, msg));
+        } else {
+            next_state.set(BevygapClientState::Error(
+                0,
+                "Can't talk to matchmaker".to_string(),
+            ));
+        }
     }
 
     for response in ev_response.drain() {
         let response = response.into_inner();
 
-        let cert_digest = response.cert_digest.replace(":", "");
+        let cert_digest = response.cert_digest.replace(':', "");
         info!("Using cert digest {cert_digest}");
 
         let tok_bytes = BASE64_STANDARD.decode(&response.connect_token).unwrap();
