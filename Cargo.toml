@@ -54,7 +54,7 @@ tokio-tungstenite = "0.23"
 clap = { version = "4.4", features = ["derive"] }
 # same LY ver as game:
 lightyear = {git = "https://github.com/cBournhonesque/lightyear.git", rev = "0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98", default-features = false}
-
+time = {version = "0.3.36", features = ["std"]}
 base64 = "0.22"
 # edgegap = {path = "./edgegap-client"}
 url = "^2.5"

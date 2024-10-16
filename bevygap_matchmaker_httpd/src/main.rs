@@ -1,6 +1,8 @@
+use async_nats::client::RequestErrorKind;
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderValue, Method};
 use axum::routing::post;
+use axum::Json;
 use axum::{
     extract::ConnectInfo,
     extract::Query,
@@ -122,7 +124,8 @@ async fn wannaplay_handler(
     Query(params): Query<WannaplayParams>,
     State(state): State<Arc<AppState>>,
     req: Request,
-) -> Result<impl IntoResponse, AppError> {
+) -> Response {
+    //Result<impl IntoResponse, AppError> {
     // client_ip is the one sent to Edgegap, to decide which server to assign the player to.
     // We use one provided in the qs, otherwise the connecting IP of the http client.
     let mut client_ip = params.client_ip.unwrap_or(addr.ip().to_string());
@@ -146,17 +149,58 @@ async fn wannaplay_handler(
 
     info!("wannaplay_handler req for ip {client_ip}");
     let payload = format!("{{\"client_ip\":\"{client_ip}\"}}");
-    let resp = state
+    match state
         .bgnats
         .client()
         // .request_with_headers(subject, headers, payload)
         .request("session.gensession", payload.into())
-        .await?;
+        .await
+    {
+        // Don't really understand the reasoning here, but if you respond to a service
+        // request with an Err, you still get an Ok here, and have to examine the headers
+        // to figure out if it was actually an error?
+        // see: https://github.com/nats-io/nats.rs/blob/main/async-nats/tests/service_tests.rs#L245
+        Ok(resp) => {
+            if let Some((code, msg)) = message_error(&resp) {
+                error!("Got error matchmaker response: {:?}", msg);
+                (
+                    StatusCode::from_u16(code as u16).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
+                    msg,
+                )
+                    .into_response()
+            } else {
+                info!("Got OK matchmaker response: {:?}", resp);
+                ([(header::CONTENT_TYPE, "text/json")], resp.payload).into_response()
+            }
+        }
+        Err(e) => {
+            warn!("Got Err matchmaker response: {:?}", e);
+            match e.kind() {
+                RequestErrorKind::TimedOut => {
+                    (StatusCode::REQUEST_TIMEOUT, "Request timeout").into_response()
+                }
+                RequestErrorKind::NoResponders => {
+                    (StatusCode::SERVICE_UNAVAILABLE, "No service responders").into_response()
+                }
+                RequestErrorKind::Other => {
+                    (StatusCode::INTERNAL_SERVER_ERROR, "Unhandled error").into_response()
+                }
+            }
+        }
+    }
+}
 
-    info!("Got matchmaker response: {:?}", resp);
-    // resp.payload
-    let reply = ([(header::CONTENT_TYPE, "text/json")], resp.payload);
-    Ok(reply)
+fn message_error(message: &async_nats::Message) -> Option<(usize, String)> {
+    let h = message.headers.clone()?;
+    if let Some(code) = h.get(async_nats::service::NATS_SERVICE_ERROR_CODE) {
+        let msg_str = h
+            .get(async_nats::service::NATS_SERVICE_ERROR)
+            .unwrap()
+            .to_string();
+        Some((code.as_str().parse::<usize>().unwrap(), msg_str))
+    } else {
+        None
+    }
 }
 
 /// Serde deserialization decorator to map empty Strings to None,
@@ -183,29 +227,4 @@ fn setup_logging() {
         .with(tracing_subscriber::EnvFilter::from_default_env())
         .with(tracing_subscriber::fmt::Layer::default().compact())
         .init();
-}
-
-// Make our own error that wraps `anyhow::Error`.
-struct AppError(anyhow::Error);
-
-// Tell axum how to convert `AppError` into a response.
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", self.0),
-        )
-            .into_response()
-    }
-}
-
-// This enables using `?` on functions that return `Result<_, anyhow::Error>` to turn them into
-// `Result<_, AppError>`. That way you don't need to do that manually.
-impl<E> From<E> for AppError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(err: E) -> Self {
-        Self(err.into())
-    }
 }

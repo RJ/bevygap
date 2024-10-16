@@ -167,7 +167,7 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
         info!("NATS connected");
 
         let kv_c2s = bgnats.kv_c2s().clone();
-        let kv_sessions = bgnats.kv_sessions().clone();
+        let kv_sessions = bgnats.kv_active_connections().clone();
         let kv_cert_digests = bgnats.kv_cert_digests().clone();
         let client = bgnats.client().clone();
 
@@ -198,14 +198,17 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
                             panic!("Client ID is not mapped to a session id! wtf.");
                         }
                         Some(session_id) => {
-                            let key = String::from_utf8(session_id.into())
+                            let session_id_key = String::from_utf8(session_id.into())
                                 .expect("Failed to convert session_id to string");
-                            info!("Client ID {client_id} associated with session id: {key}",);
-                            client_id_to_session_id.insert(client_id, key.clone());
+                            info!("Client ID {client_id} associated with session id: {session_id_key}",);
+                            client_id_to_session_id.insert(client_id, session_id_key.clone());
                             kv_sessions
-                                .put(key, client_id.to_string().into())
+                                .put(session_id_key, client_id.to_string().into())
                                 .await
                                 .expect("Failed to put client_id in KV");
+                            // delete the mappings.
+                            // this signifies the session
+                            // let _ = kv_c2s.delete(client_id.to_string()).await;
                         }
                     }
                 }

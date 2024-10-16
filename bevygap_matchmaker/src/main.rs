@@ -1,6 +1,7 @@
 // use std::time::Duration;
 
-use async_nats::jetstream;
+// use async_nats::jetstream;
+// use async_nats::jetstream::stream::Stream;
 // use async_nats::jetstream::stream::StorageType;
 use async_nats::Client;
 use clap::Parser;
@@ -10,12 +11,17 @@ use edgegap::apis::configuration::*;
 use futures::stream::StreamExt;
 use lightyear::connection::netcode::PRIVATE_KEY_BYTES;
 use log::*;
-use session_service::session_cleanup_supervisor;
 use tracing_subscriber::{layer::*, util::*};
 
 use bevygap_shared::*;
 
+mod session_delete_worker;
+mod session_reaper;
 mod session_service;
+
+use session_delete_worker::*;
+use session_reaper::*;
+use session_service::*;
 
 fn edgegap_configuration(_settings: &Settings) -> Configuration {
     let key =
@@ -47,7 +53,7 @@ pub struct Settings {
 }
 
 impl Settings {
-    pub fn private_key_bytes(&self) -> [u8; PRIVATE_KEY_BYTES] {
+    fn parse_private_key(&self) -> [u8; PRIVATE_KEY_BYTES] {
         if self.lightyear_private_key.is_empty() {
             return [0u8; PRIVATE_KEY_BYTES];
         }
@@ -99,6 +105,7 @@ pub(crate) struct MatchmakerState {
     nats: BevygapNats,
     api_config: Configuration,
     settings: Settings,
+    lypkey: [u8; PRIVATE_KEY_BYTES],
 }
 
 impl MatchmakerState {
@@ -108,17 +115,8 @@ impl MatchmakerState {
     pub(crate) fn configuration(&self) -> &Configuration {
         &self.api_config
     }
-    pub(crate) fn kv_s2c(&self) -> &jetstream::kv::Store {
-        self.nats.kv_s2c()
-    }
-    pub(crate) fn kv_c2s(&self) -> &jetstream::kv::Store {
-        self.nats.kv_c2s()
-    }
-    pub(crate) fn kv_sessions(&self) -> &jetstream::kv::Store {
-        self.nats.kv_sessions()
-    }
-    pub(crate) fn kv_cert_digests(&self) -> &jetstream::kv::Store {
-        self.nats.kv_cert_digests()
+    pub(crate) fn lightyear_private_key(&self) -> [u8; PRIVATE_KEY_BYTES] {
+        self.lypkey
     }
 }
 
@@ -127,23 +125,23 @@ async fn main() -> Result<(), async_nats::Error> {
     setup_logging();
     info!("Starting Edgegap Matchmaker");
     let bgnats = BevygapNats::new_and_connect("matchmaker").await.unwrap();
-
     let settings = Settings::parse();
-    // info!("priv key bytes: {:?}", settings.private_key_bytes());
-
+    let lypkey = settings.parse_private_key();
     let api_config = edgegap_configuration(&settings);
-
     let mm_state = MatchmakerState {
         nats: bgnats,
         api_config,
         settings,
+        lypkey,
     };
 
     // ensure the specified app, version, and deployment are valid and ready for players.
     verify_application(&mm_state).await?;
 
     let state = mm_state.clone();
-    let _watcher = tokio::spawn(async move { session_cleanup_supervisor(&state).await });
+    let _a = tokio::spawn(async move { session_cleanup_supervisor(&state).await });
+    let state = mm_state.clone();
+    let _b = tokio::spawn(async move { delete_session_worker_supervisor(&state).await });
 
     let state = mm_state.clone();
     let _watcher = tokio::spawn(async move {
@@ -155,7 +153,7 @@ async fn main() -> Result<(), async_nats::Error> {
 
     let state = mm_state.clone();
     let session_service = tokio::spawn(async move {
-        match session_service::session_request_supervisor(&state).await {
+        match session_request_supervisor(&state).await {
             Ok(_) => info!("Session service completed"),
             Err(e) => error!("Error in session service: {}", e),
         }
@@ -195,13 +193,13 @@ async fn verify_application(state: &MatchmakerState) -> Result<(), async_nats::E
         info!("🟢 Application version '{}' is active.", app_version.name);
     } else {
         error!(
-            "🔴 Application version '{}' is not active, aborting.",
+            "🔴 Application version '{}' is not active, won't be able to create sessions.",
             app_version.name
         );
-        std::process::exit(1);
+        // std::process::exit(1);
     }
 
-    info!("✅ {} @ {}", settings.app_name, settings.app_version);
+    // info!("✅ {} @ {}", settings.app_name, settings.app_version);
 
     Ok(())
 }

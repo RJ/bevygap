@@ -1,14 +1,12 @@
-use std::net::SocketAddr;
-
 use crate::MatchmakerState;
-use async_nats::{jetstream::kv::Operation, service::ServiceExt};
+use async_nats::service::ServiceExt;
 use base64::prelude::*;
 use edgegap::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
 use futures::StreamExt;
 use lightyear::prelude::ConnectToken;
 use log::*;
 use serde::{de, Deserialize, Serialize};
-// use std::{env, str::from_utf8, time::Duration};
+use std::net::SocketAddr;
 
 #[derive(Deserialize, Debug)]
 struct SessionRequest {
@@ -54,49 +52,11 @@ fn decode_request(raw: &[u8]) -> Result<SessionRequest, serde_json::Error> {
     })
 }
 
-pub async fn session_cleanup_supervisor(state: &MatchmakerState) -> Result<(), async_nats::Error> {
-    let state = state.clone();
-    let handle = tokio::spawn(async move {
-        loop {
-            let _ = session_cleanup_watcher(&state).await;
-            error!("session_cleanup_watcher exited, restarting");
-        }
-    });
-    futures::future::join_all([handle]).await;
-    Ok(())
-}
-
 pub async fn session_request_supervisor(state: &MatchmakerState) -> Result<(), async_nats::Error> {
     let handles = (0..5).map(|_| session_request_handler(state));
 
     futures::future::join_all(handles).await;
 
-    Ok(())
-}
-
-async fn session_cleanup_watcher(state: &MatchmakerState) -> Result<(), async_nats::Error> {
-    let kv = state.kv_sessions();
-    let mut watcher = kv.watch(">").await?;
-    while let Some(event) = watcher.next().await {
-        info!("{event:?}");
-        match event {
-            Ok(event) => {
-                let session_id = event.key;
-                if event.operation == Operation::Delete {
-                    info!("active_connection deleted, deleting session {session_id}",);
-                    session_delete(state.configuration(), session_id.as_str())
-                        .await
-                        .expect("Failed to delete session");
-                }
-                if event.operation == Operation::Put {
-                    info!("New Session put {session_id} ");
-                }
-            }
-            Err(e) => {
-                warn!("KV event error watching for session cleanup: {:?}", e);
-            }
-        }
-    }
     Ok(())
 }
 
@@ -133,11 +93,30 @@ async fn session_request_handler(state: &MatchmakerState) -> Result<(), async_na
                             .await
                             .unwrap();
                     }
+
+                    Err(edgegap::apis::Error::ResponseError(e)) => {
+                        error!("edgegap api error: {:?}", e);
+                        let (err_code, err_msg) = match e.entity {
+                            Some(SessionPostError::Status400(ee)) => (400, ee.message),
+                            Some(SessionPostError::Status401(ee)) => (401, ee.message),
+                            Some(SessionPostError::Status409(ee)) => (409, ee.message),
+                            _ => (999, "unknown error".to_string()),
+                        };
+                        error!("error in session_responder: {err_code}={err_msg}");
+                        request
+                            .respond(Err(async_nats::service::error::Error {
+                                status: err_msg,
+                                code: err_code,
+                            }))
+                            .await
+                            .unwrap();
+                    }
                     Err(e) => {
+                        error!("Unhandled error in session_responder: {:?}", e);
                         request
                             .respond(Err(async_nats::service::error::Error {
                                 status: format!("error generating session: {}", e),
-                                code: 0,
+                                code: 500, // internal server error
                             }))
                             .await
                             .unwrap();
@@ -148,8 +127,8 @@ async fn session_request_handler(state: &MatchmakerState) -> Result<(), async_na
                     // TODO: not sure how to properly respond with an error here.
                     request
                         .respond(Err(async_nats::service::error::Error {
-                            status: format!("error decoding session request: {}", e),
-                            code: 0,
+                            status: "error decoding session request!".to_string(),
+                            code: 400, // bad request
                         }))
                         .await
                         .unwrap();
@@ -162,6 +141,10 @@ async fn session_request_handler(state: &MatchmakerState) -> Result<(), async_na
 
     Ok(())
 }
+
+// if app version disabled, get_session returns:
+// Nats-Service-Error-Code: 0
+//Nats-Service-Error: error generating session: error in response: status code 400 Bad Request
 
 /// Generate the session on edgegap, the connect token, and reply via nats:
 ///
@@ -203,12 +186,15 @@ async fn session_responder(
        {"session_id": "950dd2eaff09-S", "status": "Ready", "ready": true, "kind": "Seat",
         "user_count": 1, "linked": true, "webhook_url": "https://example.com/hook/session",
          "deployment_request_id": "57f84a8e1298"}
-       so perhaps we should just watch a KV value for the session, and update it with polling and from
-       the webhook, whichever happens first, then reply to the client.
+
+        so perhaps we should have clients watch a requesting_session.SESSION_ID queue,
+        and write updates to that (from polling or a webhook).
+
     */
 
     let mut session_get;
     let mut tries = 0;
+    let mut first_seen_session_id = false;
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
     loop {
         tries += 1;
@@ -223,6 +209,22 @@ async fn session_responder(
             })?;
 
         info!("{session_get:?}");
+
+        // Avoid session leakage!
+        // the first time we get a response with a session_id, we store it in unclaimed_sessions,
+        // so we can automatically delete it if it goes unused.
+        if !first_seen_session_id {
+            first_seen_session_id = true;
+            let session_id_str = session_get.session_id.clone();
+            info!("Writing session_id to unclaimed_sessions KV: {session_id_str}");
+            let val = session_id_str.clone().into();
+            state
+                .nats
+                .kv_unclaimed_sessions()
+                .put(session_id_str, val)
+                .await
+                .expect("Failed to put session_id in unclaimed_sessions KV");
+        }
 
         if session_get.ready {
             break;
@@ -278,6 +280,7 @@ async fn session_responder(
     // TODO once the session is ready, the cert digest should have been reported, but
     // there is definitely a race here so we should block on it for a second or so?
     let cert_digest = state
+        .nats
         .kv_cert_digests()
         .get(public_ip_str)
         .await
@@ -292,13 +295,13 @@ async fn session_responder(
     info!(
         "🏠 BUILD ConnectToken: server_addresses = {server_addresses} proto id: {}, client_id: {client_id}, privkey: {:?}",
         state.settings.protocol_id(),
-        state.settings.private_key_bytes()
+        state.lightyear_private_key()
     );
     let token = ConnectToken::build(
         server_addresses,
         state.settings.protocol_id(),
         client_id,
-        state.settings.private_key_bytes(),
+        state.lightyear_private_key(),
     )
     .generate()
     .expect("Failed to generate token");
@@ -310,6 +313,7 @@ async fn session_responder(
     // lookup based on clientid.
     let client_id_str = client_id.to_string();
     state
+        .nats
         .kv_c2s()
         .put(
             client_id_str.as_str(),
@@ -323,6 +327,7 @@ async fn session_responder(
             ))
         })?;
     state
+        .nats
         .kv_s2c()
         .put(session_get.session_id.as_str(), client_id_str.into())
         .await
@@ -347,3 +352,13 @@ async fn session_responder(
 
     Ok(resp)
 }
+
+// prevent session leaks:
+/*
+    When a client connects to the game server, the server puts the session_id to KV active_sessions.
+
+    If we write session_id to unclaimed_sessions on issue, then delete when it appears in active_sessions,
+    we can poll the unclaimed_sessions for keys older than a timeout, for deletion?
+
+
+*/

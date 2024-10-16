@@ -160,3 +160,7 @@ Access to fetch at 'http://127.0.0.1:3000/wannaplay' from origin 'http://lan-mac
 
 The client needs to be configured with the path to the matchmaker_httpd endpoint.
 Possibly defaulting to /matchmaker/* on current domain? 
+
+Need to guarantee no leaked sessions. 
+If MM gives session and player connects, server will delete session on player disconnect.
+if they fail to connect to server after getting a session, session leaks atm.
