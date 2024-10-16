@@ -18,6 +18,7 @@ use log::*;
 use serde::{de, Deserialize, Deserializer};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use std::{fmt, str::FromStr};
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::*, util::*};
@@ -149,11 +150,17 @@ async fn wannaplay_handler(
 
     info!("wannaplay_handler req for ip {client_ip}");
     let payload = format!("{{\"client_ip\":\"{client_ip}\"}}");
+
+    // this timeout should far exceed the cutoff time in the matchmaker.
+    // it is merely a last line of defense.
+    let request = async_nats::client::Request::new()
+        .timeout(Some(Duration::from_secs(60)))
+        .payload(payload.into());
+
     match state
         .bgnats
         .client()
-        // .request_with_headers(subject, headers, payload)
-        .request("session.gensession", payload.into())
+        .send_request("session.gensession", request)
         .await
     {
         // Don't really understand the reasoning here, but if you respond to a service
@@ -161,7 +168,7 @@ async fn wannaplay_handler(
         // to figure out if it was actually an error?
         // see: https://github.com/nats-io/nats.rs/blob/main/async-nats/tests/service_tests.rs#L245
         Ok(resp) => {
-            if let Some((code, msg)) = message_error(&resp) {
+            if let Some((code, msg)) = maybe_message_error(&resp) {
                 error!("Got error matchmaker response: {:?}", msg);
                 (
                     StatusCode::from_u16(code as u16).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
@@ -190,7 +197,7 @@ async fn wannaplay_handler(
     }
 }
 
-fn message_error(message: &async_nats::Message) -> Option<(usize, String)> {
+fn maybe_message_error(message: &async_nats::Message) -> Option<(usize, String)> {
     let h = message.headers.clone()?;
     if let Some(code) = h.get(async_nats::service::NATS_SERVICE_ERROR_CODE) {
         let msg_str = h
