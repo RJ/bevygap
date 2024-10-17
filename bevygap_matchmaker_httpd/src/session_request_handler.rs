@@ -1,11 +1,7 @@
+use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderMap, HeaderValue};
-use axum::{
-    extract::ConnectInfo,
-    extract::Query,
-    response::sse::{self, Sse},
-    response::IntoResponse,
-};
+use axum::{extract::ConnectInfo, extract::Query, response::IntoResponse};
 use log::*;
 use serde::Deserialize;
 use std::convert::Infallible;
@@ -62,28 +58,39 @@ pub async fn session_chunked_responder(
                 break;
             }
             // info!("Got chunk, writing to channel");
-            tx.send(String::from_utf8(msg.payload.to_vec()).unwrap())
+            let Ok(_) = tx
+                .send(String::from_utf8(msg.payload.to_vec()).unwrap())
                 .await
-                .unwrap();
+            else {
+                warn!("Can't write to channel, closed: {}", tx.is_closed());
+                break;
+            };
         }
         // info!("reading from response_subscriber done");
         // tx should be dropped here, and rx will close, ending the stream.
     });
 
     // Create a stream that reads from rx and sends SSE events
-    let stream =
-        tokio_stream::StreamExt::map(tokio_stream::wrappers::ReceiverStream::new(rx), |text| {
-            Ok::<sse::Event, Infallible>(sse::Event::default().data(text))
-        });
+    // let stream =
+    //     tokio_stream::StreamExt::map(tokio_stream::wrappers::ReceiverStream::new(rx), |text| {
+    //         Ok::<sse::Event, Infallible>(sse::Event::default().js (text))
+    //     });
+    let stream = tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok::<String, Infallible>);
 
     let mut headers = HeaderMap::new();
     headers.insert(
         header::CONTENT_TYPE,
         HeaderValue::from_static("application/json"),
     );
+    headers.insert(
+        header::TRANSFER_ENCODING,
+        HeaderValue::from_static("chunked"),
+    );
 
-    // Return the stream using Axum's SSE (Server-Sent Events) mechanism, aka chunked transfer.
-    (headers, Sse::new(stream))
+    (
+        headers,
+        Body::from_stream(stream), // Wrap the stream in an HTTP body for chunked transfer
+    )
 }
 
 /// Logic to decide what to use as the clients IP address for the purposes of Edgegap sessions.

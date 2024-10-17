@@ -244,7 +244,7 @@ async fn stream_request_processor(
     let token_bytes = token.try_into_bytes().expect("Failed to serialize token");
     let token_base64 = BASE64_STANDARD.encode(token_bytes);
 
-    register_cid_and_token_in_nats(state, client_id.to_string(), session_get.session_id).await?;
+    register_ids_in_nats(state, client_id.to_string(), session_get.session_id).await?;
 
     responder
         .send(SessionRequestFeedback::SessionReady {
@@ -257,7 +257,7 @@ async fn stream_request_processor(
     Ok(())
 }
 
-async fn register_cid_and_token_in_nats(
+async fn register_ids_in_nats(
     state: &MatchmakerState,
     client_id: String,
     session_id: String,
