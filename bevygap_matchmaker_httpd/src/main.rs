@@ -76,7 +76,7 @@ async fn main() {
     );
     // to support multiple cors origins, we'd need to have a list, and check if the request is from
     // one of them, if so, return it as the cors header.
-    let wannaplay_cors = CorsLayer::new()
+    let cors_layer = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST])
         .allow_origin(
             settings
@@ -90,12 +90,11 @@ async fn main() {
         .route("/", get(index_handler))
         // this probably warrants a formtoken like system or something too..
         .route("/matchmaker/wannaplay", post(wannaplay_handler))
-        .layer(wannaplay_cors)
         .route(
-            "/matchmaker/wannaplay2",
+            "/matchmaker/request/:game/:version",
             post(session_request_handler::session_chunked_responder),
         )
-        // .layer(wannaplay_cors)
+        .layer(cors_layer)
         .with_state(app_state);
 
     // run it

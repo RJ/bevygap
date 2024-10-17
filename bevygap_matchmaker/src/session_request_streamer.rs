@@ -8,6 +8,8 @@ use lightyear::prelude::ConnectToken;
 use log::*;
 use serde::{de, Deserialize, Serialize};
 use std::net::{IpAddr, SocketAddr};
+use std::time::Duration;
+use tokio::time::Instant;
 
 #[derive(Deserialize, Debug)]
 pub struct SessionRequest {
@@ -135,6 +137,7 @@ async fn stream_request_processor(
     let mut session_get;
     let mut tries = 0;
     let mut first_seen_session_id = false;
+    let start_time = Instant::now();
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
     loop {
         tries += 1;
@@ -175,7 +178,8 @@ async fn stream_request_processor(
             break;
         }
 
-        if tries > 100 {
+        let elapsed = Instant::now().duration_since(start_time);
+        if elapsed > Duration::from_secs(60) {
             return Err(MyError::Bevygap(
                 408,
                 "session still not ready, timed out.".into(),
@@ -319,9 +323,10 @@ pub(crate) async fn streaming_session_request_handler(
     let client = state.nats_client().clone();
     info!("Listening for session requests on 'matchmaker.request'");
 
-    let mut sub = client.subscribe("matchmaker.request").await?;
+    let mut sub = client.subscribe("matchmaker.request.>").await?;
 
     while let Some(message) = sub.next().await {
+        info!("Matchmaking request on {}", message.subject);
         let Some(reply_to) = message.reply else {
             error!("got message with no reply-to, discarding");
             continue;

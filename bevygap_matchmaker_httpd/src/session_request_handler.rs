@@ -1,5 +1,5 @@
 use axum::body::Body;
-use axum::extract::{Request, State};
+use axum::extract::{Path, Request, State};
 use axum::http::{header, HeaderMap, HeaderValue};
 use axum::{extract::ConnectInfo, extract::Query, response::IntoResponse};
 use log::*;
@@ -14,7 +14,7 @@ use crate::AppState;
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
-pub struct WannaplayParams {
+pub(crate) struct QsParams {
     #[serde(default, deserialize_with = "crate::empty_string_as_none")]
     client_ip: Option<String>,
 }
@@ -24,9 +24,10 @@ pub struct WannaplayParams {
 // session_requests.1234567890
 // and then results are streamed back on that?
 
-pub async fn session_chunked_responder(
+pub(crate) async fn session_chunked_responder(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    Query(params): Query<WannaplayParams>,
+    Query(params): Query<QsParams>,
+    Path((game_name, game_ver)): Path<(String, String)>,
     State(state): State<Arc<AppState>>,
     req: Request,
 ) -> impl IntoResponse {
@@ -42,7 +43,11 @@ pub async fn session_chunked_responder(
     // this publish needs to "opt in to no_responder messages" somehow, per
     // https://docs.nats.io/reference/reference-protocols/nats-protocol
     client
-        .publish_with_reply("matchmaker.request", reply_inbox, payload.into())
+        .publish_with_reply(
+            format!("matchmaker.request.{game_name}.{game_ver}"),
+            reply_inbox,
+            payload.into(),
+        )
         .await
         .unwrap();
     // TODO subject shoud have app name/ver in it?
@@ -70,11 +75,6 @@ pub async fn session_chunked_responder(
         // tx should be dropped here, and rx will close, ending the stream.
     });
 
-    // Create a stream that reads from rx and sends SSE events
-    // let stream =
-    //     tokio_stream::StreamExt::map(tokio_stream::wrappers::ReceiverStream::new(rx), |text| {
-    //         Ok::<sse::Event, Infallible>(sse::Event::default().js (text))
-    //     });
     let stream = tokio_stream::wrappers::ReceiverStream::new(rx).map(Ok::<String, Infallible>);
 
     let mut headers = HeaderMap::new();
@@ -103,7 +103,7 @@ pub async fn session_chunked_responder(
 /// Additionally if they above yields a localhost address, we replace it with
 /// settings.fake_ip, which is also useful for dev.
 fn get_client_ip(
-    params: &WannaplayParams,
+    params: &QsParams,
     addr: &SocketAddr,
     headers: &HeaderMap,
     state: &AppState,

@@ -6,7 +6,7 @@ publish.workspace = true
 edition.workspace = true
 
 [dependencies]
-axum = "0.7.7"
+axum.workspace = true
 http-body-util = "0.1.0"
 tokio.workspace = true
 tokio-stream.workspace = true

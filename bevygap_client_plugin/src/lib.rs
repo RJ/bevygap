@@ -13,12 +13,23 @@ pub mod prelude {
 }
 mod traits;
 
-#[derive(Debug, Clone, Deserialize, Default)]
-struct SessionResponse {
-    connect_token: String,
-    gameserver_ip: String,
-    gameserver_port: u16,
-    cert_digest: String,
+#[derive(Serialize, Deserialize, Debug)]
+pub enum SessionRequestFeedback {
+    /// The service has begun processing the request.
+    Acknowledged,
+    /// The edgegap session was created, we are now awaiting readyness
+    SessionRequestAccepted(String),
+    /// Session readyness update
+    ProgressReport(String),
+    /// The session is ready to connect to
+    SessionReady {
+        token: String,
+        ip: String,
+        port: u16,
+        cert_digest: String,
+    },
+    /// There was an error.
+    Error(u16, String),
 }
 
 #[derive(States, Debug, Clone, Default, Eq, PartialEq, Hash)]
@@ -28,13 +39,26 @@ pub enum BevygapClientState {
     /// Entering this state triggers a "want to play" request to the matchmaker
     Request,
     /// The request has been sent, awaiting a response
-    AwaitingResponse,
+    AwaitingResponse(String),
     /// Got a good response from the matchmaker, ready to connect to the gameserver
     ReadyToConnect,
     /// We triggered a connection attempt.
     Finished,
     /// The request failed
     Error(u16, String),
+}
+
+impl BevygapClientState {
+    // run condition alternative to in_state(Enum(_with_param_))
+    // since in_state doesn't support enum variants with parameters
+    fn pending_state() -> impl FnMut(Option<Res<State<BevygapClientState>>>) -> bool + Clone {
+        move |current_state: Option<Res<State<BevygapClientState>>>| match current_state {
+            Some(current_state) => {
+                matches!(current_state.get(), BevygapClientState::AwaitingResponse(_))
+            }
+            _ => false,
+        }
+    }
 }
 
 #[derive(Resource, Debug, Clone)]
@@ -59,7 +83,7 @@ pub struct BevygapClientPlugin;
 impl Plugin for BevygapClientPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(HttpClientPlugin);
-        app.register_request_type::<SessionResponse>();
+        app.register_request_type::<SessionRequestFeedback>();
         app.init_resource::<BevygapClientConfig>();
         app.init_state::<BevygapClientState>();
 
@@ -67,7 +91,7 @@ impl Plugin for BevygapClientPlugin {
 
         app.add_systems(
             Update,
-            handle_matchmaker_response.run_if(in_state(BevygapClientState::AwaitingResponse)),
+            handle_matchmaker_response.run_if(BevygapClientState::pending_state()),
         );
 
         app.add_systems(OnEnter(BevygapClientState::ReadyToConnect), connect_client);
@@ -75,7 +99,7 @@ impl Plugin for BevygapClientPlugin {
 }
 
 fn request_token(
-    mut ev_request: EventWriter<TypedRequest<SessionResponse>>,
+    mut ev_request: EventWriter<TypedRequest<SessionRequestFeedback>>,
     mut next_state: ResMut<NextState<BevygapClientState>>,
     config: Res<BevygapClientConfig>,
 ) {
@@ -89,15 +113,18 @@ fn request_token(
     ev_request.send(
         HttpClient::new()
             .post(matchmaker_url)
-            .with_type::<SessionResponse>(),
+            .with_type::<SessionRequestFeedback>()
+            .with_streaming(),
     );
-    next_state.set(BevygapClientState::AwaitingResponse);
+    next_state.set(BevygapClientState::AwaitingResponse(
+        "Requesting ...".to_string(),
+    ));
 }
 
 #[allow(unused_variables)]
 fn handle_matchmaker_response(
-    mut ev_response: ResMut<Events<TypedResponse<SessionResponse>>>,
-    mut ev_response_error: ResMut<Events<TypedResponseError<SessionResponse>>>,
+    mut ev_response: ResMut<Events<TypedResponsePart<SessionRequestFeedback>>>,
+    mut ev_response_error: ResMut<Events<TypedResponseError<SessionRequestFeedback>>>,
     mut client_config: ResMut<ClientConfig>,
     mut next_state: ResMut<NextState<BevygapClientState>>,
     config: Res<BevygapClientConfig>,
@@ -117,45 +144,66 @@ fn handle_matchmaker_response(
 
     for response in ev_response.drain() {
         let response = response.into_inner();
+        info!("GOT PART: {response:?}");
+        match response {
+            SessionRequestFeedback::Acknowledged => next_state.set(
+                BevygapClientState::AwaitingResponse("Request acknowledged".to_string()),
+            ),
+            SessionRequestFeedback::SessionRequestAccepted(sess_id) => next_state.set(
+                BevygapClientState::AwaitingResponse(format!("Session created: {sess_id}")),
+            ),
+            SessionRequestFeedback::ProgressReport(prog_msg) => next_state.set(
+                BevygapClientState::AwaitingResponse(format!("Progress: {prog_msg}")),
+            ),
+            SessionRequestFeedback::Error(err_code, err_msg) => {
+                next_state.set(BevygapClientState::Error(err_code, err_msg))
+            }
+            SessionRequestFeedback::SessionReady {
+                token,
+                ip,
+                port,
+                cert_digest,
+            } => {
+                let cert_digest = cert_digest.replace(':', "");
+                info!("Using cert digest {cert_digest}");
+                let tok_bytes = BASE64_STANDARD.decode(&token).unwrap();
+                assert_eq!(
+                    tok_bytes.len(),
+                    2048,
+                    "ConnectTokens should be 2048 bytes exactly"
+                );
+                let connect_token = ConnectToken::try_from_bytes(tok_bytes.as_slice()).unwrap();
 
-        let cert_digest = response.cert_digest.replace(':', "");
-        info!("Using cert digest {cert_digest}");
+                // TODO be defensive here
+                let server_addr: SocketAddr = format!("{ip}:{port}")
+                    .parse()
+                    .expect("invalid gameserver addr/port from matchmaker response?");
 
-        let tok_bytes = BASE64_STANDARD.decode(&response.connect_token).unwrap();
-        assert_eq!(
-            tok_bytes.len(),
-            2048,
-            "ConnectTokens should be 2048 bytes exactly"
-        );
-        let connect_token = ConnectToken::try_from_bytes(tok_bytes.as_slice()).unwrap();
+                info!("Got matchmaker response, game server: {server_addr:?}");
 
-        // TODO be defensive here
-        let server_addr: SocketAddr =
-            format!("{}:{}", response.gameserver_ip, response.gameserver_port)
-                .parse()
-                .expect("invalid gameserver addr/port from matchmaker response?");
-
-        info!("Got matchmaker response, game server: {server_addr:?}");
-
-        if let NetConfig::Netcode { auth, io, .. } = &mut client_config.net {
-            info!("Setting Netcode connect token and server addr");
-            *auth = Authentication::Token(connect_token);
-            // inject gameserver address and port into lightyear client transport
-            // (preserves existing client_addr if it was already set)
-            let client_addr = match &mut io.transport {
-                client::ClientTransport::WebTransportClient { client_addr, .. } => client_addr,
-                _ => panic!("Unsupported transport: {:?}", io.transport),
-            };
-            io.transport = client::ClientTransport::WebTransportClient {
-                client_addr: *client_addr,
-                server_addr,
-                #[cfg(target_family = "wasm")]
-                certificate_digest: cert_digest,
-            };
-        } else {
-            panic!("Unsupported netconfig, only supports Netcode for now.");
+                if let NetConfig::Netcode { auth, io, .. } = &mut client_config.net {
+                    info!("Setting Netcode connect token and server addr");
+                    *auth = Authentication::Token(connect_token);
+                    // inject gameserver address and port into lightyear client transport
+                    // (preserves existing client_addr if it was already set)
+                    let client_addr = match &mut io.transport {
+                        client::ClientTransport::WebTransportClient { client_addr, .. } => {
+                            client_addr
+                        }
+                        _ => panic!("Unsupported transport: {:?}", io.transport),
+                    };
+                    io.transport = client::ClientTransport::WebTransportClient {
+                        client_addr: *client_addr,
+                        server_addr,
+                        #[cfg(target_family = "wasm")]
+                        certificate_digest: cert_digest,
+                    };
+                } else {
+                    panic!("Unsupported netconfig, only supports Netcode for now.");
+                }
+                next_state.set(BevygapClientState::ReadyToConnect);
+            }
         }
-        next_state.set(BevygapClientState::ReadyToConnect);
     }
 }
 
