@@ -23,6 +23,8 @@ use session_delete_worker::*;
 use session_reaper::*;
 use session_service::*;
 
+mod session_request_streamer;
+
 fn edgegap_configuration(_settings: &Settings) -> Configuration {
     let key =
         std::env::var("EDGEGAP_API_KEY").expect("EDGEGAP_API_KEY environment variable is not set");
@@ -137,6 +139,11 @@ async fn main() -> Result<(), async_nats::Error> {
 
     // ensure the specified app, version, and deployment are valid and ready for players.
     verify_application(&mm_state).await?;
+
+    let state = mm_state.clone();
+    let _a = tokio::spawn(async move {
+        session_request_streamer::streaming_session_request_handler(&state).await
+    });
 
     let state = mm_state.clone();
     let _a = tokio::spawn(async move { session_cleanup_supervisor(&state).await });

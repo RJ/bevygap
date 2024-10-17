@@ -2,7 +2,6 @@ use async_nats::client::RequestErrorKind;
 use axum::extract::{Request, State};
 use axum::http::{header, HeaderValue, Method};
 use axum::routing::post;
-use axum::Json;
 use axum::{
     extract::ConnectInfo,
     extract::Query,
@@ -22,6 +21,8 @@ use std::time::Duration;
 use std::{fmt, str::FromStr};
 use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::*, util::*};
+
+mod session_request_handler;
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
@@ -51,9 +52,9 @@ impl Settings {
     }
 }
 
-struct AppState {
-    bgnats: BevygapNats,
-    settings: Settings,
+pub(crate) struct AppState {
+    pub(crate) bgnats: BevygapNats,
+    pub(crate) settings: Settings,
 }
 
 #[tokio::main]
@@ -90,6 +91,11 @@ async fn main() {
         // this probably warrants a formtoken like system or something too..
         .route("/matchmaker/wannaplay", post(wannaplay_handler))
         .layer(wannaplay_cors)
+        .route(
+            "/matchmaker/wannaplay2",
+            post(session_request_handler::session_chunked_responder),
+        )
+        // .layer(wannaplay_cors)
         .with_state(app_state);
 
     // run it
@@ -211,7 +217,7 @@ fn maybe_message_error(message: &async_nats::Message) -> Option<(usize, String)>
 }
 
 /// Serde deserialization decorator to map empty Strings to None,
-fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
+pub(crate) fn empty_string_as_none<'de, D, T>(de: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
     T: FromStr,
