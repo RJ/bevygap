@@ -739,7 +739,7 @@ dependencies = [
 [[package]]
 name = "bevy_http_client"
 version = "0.6.0"
-source = "git+https://github.com/RJ/bevy_http_client.git?branch=streaming#f1d7447b72d8e7011ea5fd583be9dbba2bc0adc2"
+source = "git+https://github.com/RJ/bevy_http_client.git?branch=streaming#da3d6c71f787b2347d788148a883149618bc07f6"
 dependencies = [
  "bevy_app",
  "bevy_derive",
