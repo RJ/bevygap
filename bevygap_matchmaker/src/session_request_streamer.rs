@@ -136,7 +136,7 @@ async fn stream_request_processor(
 
     let mut session_get;
     let mut tries = 0;
-    let mut first_seen_session_id = false;
+    // let mut first_seen_session_id = false;
     let start_time = Instant::now();
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
     loop {
@@ -161,18 +161,21 @@ async fn stream_request_processor(
         // Avoid session leakage!
         // the first time we get a response with a session_id, we store it in unclaimed_sessions,
         // so we can automatically delete it if it goes unused.
-        if !first_seen_session_id {
-            first_seen_session_id = true;
-            let session_id_str = session_get.session_id.clone();
-            info!("Writing session_id to unclaimed_sessions KV: {session_id_str}");
-            let val = session_id_str.clone().into();
-            state
-                .nats
-                .kv_unclaimed_sessions()
-                .put(session_id_str, val)
-                .await
-                .expect("Failed to put session_id in unclaimed_sessions KV");
-        }
+        // if !first_seen_session_id {
+        // first_seen_session_id = true;
+        // this kv buckets has 30sec expiry i think, but that starts ticking
+        // while we spend 20+ secs waiting on a session sometimes, so it's deleted
+        // before we need it. So renew the timeout each iteration for now:
+        let session_id_str = session_get.session_id.clone();
+        // info!("Writing session_id to unclaimed_sessions KV: {session_id_str}");
+        let val = session_id_str.clone().into();
+        state
+            .nats
+            .kv_unclaimed_sessions()
+            .put(session_id_str, val)
+            .await
+            .expect("Failed to put session_id in unclaimed_sessions KV");
+        // }
 
         if session_get.ready {
             break;
