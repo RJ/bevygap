@@ -144,7 +144,7 @@ fn handle_matchmaker_response(
 
     for response in ev_response.drain() {
         let response = response.into_inner();
-        info!("GOT PART: {response:?}");
+        // info!("GOT PART: {response:?}");
         match response {
             SessionRequestFeedback::Acknowledged => next_state.set(
                 BevygapClientState::AwaitingResponse("Request acknowledged".to_string()),

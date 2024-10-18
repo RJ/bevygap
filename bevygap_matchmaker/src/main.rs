@@ -25,6 +25,8 @@ use session_service::*;
 
 mod session_request_streamer;
 
+pub const MAX_SESSION_CREATION_SECONDS: u64 = 60;
+
 fn edgegap_configuration(_settings: &Settings) -> Configuration {
     let key =
         std::env::var("EDGEGAP_API_KEY").expect("EDGEGAP_API_KEY environment variable is not set");

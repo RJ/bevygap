@@ -182,7 +182,8 @@ async fn stream_request_processor(
         }
 
         let elapsed = Instant::now().duration_since(start_time);
-        if elapsed > Duration::from_secs(60) {
+        if elapsed > Duration::from_secs(crate::MAX_SESSION_CREATION_SECONDS) {
+            //TODO schedule delete of session id!
             return Err(MyError::Bevygap(
                 408,
                 "session still not ready, timed out.".into(),
@@ -261,6 +262,8 @@ async fn stream_request_processor(
             cert_digest,
         })
         .await?;
+    // send an empty chunk to finish:
+    responder.finish().await?;
     Ok(())
 }
 

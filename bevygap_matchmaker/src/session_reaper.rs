@@ -46,7 +46,7 @@ async fn unclaimed_session_reaper(state: &MatchmakerState) -> Result<(), async_n
                 .expect("Failed to convert session_id to string");
             let age = OffsetDateTime::now_utc() - entry.created;
             info!("* Session {session_id} is {age} old");
-            if age > Duration::from_secs(30) {
+            if age > Duration::from_secs(crate::MAX_SESSION_CREATION_SECONDS + 2) {
                 warn!("Unclaimed session {session_id} is older than 30 seconds = {age}");
                 // write to delete_sessions work queue and remove from unclaimed_sessions KV
                 state
