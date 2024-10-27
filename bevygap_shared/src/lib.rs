@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use log::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "bevy", derive(bevy::prelude::Resource))]
 pub struct BevygapNats {
     client: Client,

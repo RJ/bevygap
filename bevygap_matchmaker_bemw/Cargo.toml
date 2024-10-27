@@ -1,0 +1,29 @@
+[package]
+name = "bevygap_matchmaker_bemw"
+version.workspace = true
+authors.workspace = true
+publish.workspace = true
+edition.workspace = true
+
+[features]
+default = ["client", "server"]
+client = []
+server = []
+
+[[bin]]
+name = "bevygap_matchmaker_server"
+path = "src/server_bin.rs"
+required-features = ["server"]
+default-features = false
+
+
+[dependencies]
+bevy_eventwork = "0.9.0"
+bevy_eventwork_mod_websockets = "0.2.0"
+url = { version = "2.0.0" }
+
+bevy = { workspace = true , default-features = true}
+serde.workspace = true
+
+[lints]
+workspace = true

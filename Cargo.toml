@@ -5,7 +5,7 @@ members = [
     "bevygap_webhook_sink",
     "bevygap_shared",
     "bevygap_server_plugin",
-    "bevygap_client_plugin",
+    "bevygap_client_plugin", "bevygap_matchmaker_bemw",
 ]
 resolver = "2"
 

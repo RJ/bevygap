@@ -24,21 +24,21 @@ services:
     labels:
       - "traefik.enable=true"
 
-# wasm_httpd:
-#   container_name: wasm_httpd
-#   image: bevygap-spaceships-wasm
-#   build:
-#     context: ../bevygap-spaceships/
-#     dockerfile: ../bevygap-spaceships/client/Dockerfile
-#   restart: unless-stopped
-#   depends_on:
-#     - nats
-#   labels:
-#     - "traefik.enable=true"
-#     - "traefik.http.routers.wasm-httpd.rule=PathPrefix(`/bevygap-spaceships/`)"
-#     - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/bevygap-spaceships"
-#     - "traefik.http.routers.wasm-httpd.middlewares=test-stripprefix"
-#     - "traefik.http.services.wasm-httpd.loadbalancer.server.port=80"
+  wasm_httpd:
+    container_name: wasm_httpd
+    image: bevygap-spaceships-wasm
+    build:
+      context: ../bevygap-spaceships/
+      dockerfile: ../bevygap-spaceships/client/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - nats
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wasm-httpd.rule=PathPrefix(`/bevygap-spaceships/`)"
+      - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/bevygap-spaceships"
+      - "traefik.http.routers.wasm-httpd.middlewares=test-stripprefix"
+      - "traefik.http.services.wasm-httpd.loadbalancer.server.port=80"
 
   bevygap_webhook_sink:
     container_name: bevygap_webhook_sink

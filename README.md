@@ -9,6 +9,37 @@ to use Edgegap to spin up gameservers on demand.
 My testbed for this is [bevygap-spaceships](https://github.com/RJ/bevygap-spaceships) – a modified
 stand-alone version of the `spaceships` example from the Lightyear repo.
 
+
+# Building
+
+```
+docker-compose build
+# or with newer docker versions:
+docker compose build
+```
+
+
+# Running
+
+You need a publically accessible NATS instance, preferably with TLS.
+
+TODO - write a quickstart for nats setup, since it's the most annoying part.
+
+Then, edit the `docker-compose.yaml` and 
+
+
+
+You need an edgegap account, with your gameserver's docker image built and pushed to a registry.
+The gameserver must use the `bevygap_server_plugin`, with NATS configured correctly.
+
+```bash
+# This will start nats, the matchmaker, and the httpd
+docker-compose up
+```
+
+
+
+
 ## Connection flow
 
 * Game client talks to `bevygap_http` by GETting `/wannaplay`, expecting a `ConnectToken` and gameserver `ip:port`.
@@ -158,9 +189,17 @@ Access to fetch at 'http://127.0.0.1:3000/wannaplay' from origin 'http://lan-mac
 
 ## TODO
 
-The client needs to be configured with the path to the matchmaker_httpd endpoint.
-Possibly defaulting to /matchmaker/* on current domain? 
+add httpd to ly servers that respond like the MM, generating a cert etc?
+httpd example from bevy_remote:
+https://github.com/bevyengine/bevy/blob/main/crates/bevy_remote/src/http.rs
 
-Need to guarantee no leaked sessions. 
-If MM gives session and player connects, server will delete session on player disconnect.
-if they fail to connect to server after getting a session, session leaks atm.
+move cert gen to LY?
+
+implement the ConnectionRequestHandler properly to reject invalid connections
+
+better off with websockets for client--matchmaker connection. esp. for any advanced mm featues later.
+use https://github.com/jamescarterbell/bevy_eventwork with websockets, and have a bevy server that makes
+requests to nats? no need for my hacky http client lib then.
+
+
+move matchmaker bevy/http bits into matchmaker crate too? flag to run bemw server and mm service in one binary, using a thread for mm?
