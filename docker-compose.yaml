@@ -35,7 +35,7 @@ services:
       - nats
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.wasm-httpd.rule=PathPrefix(`/bevygap-spaceships/`)"
+      - "traefik.http.routers.wasm-httpd.rule=PathPrefix(`/bevygap-spaceships`)"
       - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/bevygap-spaceships"
       - "traefik.http.routers.wasm-httpd.middlewares=test-stripprefix"
       - "traefik.http.services.wasm-httpd.loadbalancer.server.port=80"
