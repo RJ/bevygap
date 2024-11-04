@@ -8,12 +8,13 @@ Now that `nats-cli` can connect to your NATS server, and we know it's working, l
 
 The NATS connection code in `bevygap_shared` depends on the following environment variables to set up the NATS connection.
 
-| Variable      | Required | Description                                                                             |
-| ------------- | -------- | --------------------------------------------------------------------------------------- |
-| NATS_HOST     | Yes      | NATS server address, eg: `nats.example.com:4222` or `1.2.3.4`                           |
-| NATS_USER     | Yes      | Username for NATS authentication                                                        |
-| NATS_PASSWORD | Yes      | Password for NATS authentication                                                        |
-| NATS_CA       | No       | Path to CA certificate for self-signed TLS cert verification, eg: `/path/to/rootCA.pem` |
+| Variable         | Required | Description                                                                                   |
+| ---------------- | -------- | --------------------------------------------------------------------------------------------- |
+| NATS_HOST        | Yes      | NATS server address<br><small>eg: `nats.example.com:4222` or `1.2.3.4`</small>                |
+| NATS_USER        | Yes      | Username for NATS authentication                                                              |
+| NATS_PASSWORD    | Yes      | Password for NATS authentication                                                              |
+| NATS_CA          | No       | Path to CA root certificate for self-signed certs<br><small>eg: `/path/to/rootCA.pem`</small> |
+| NATS_CA_CONTENTS | No       | Contents of the CA file<br><small>gets written to tmp file and used as NATS_CA</small>        |
 
 
 ### Create nats.env file
@@ -53,12 +54,21 @@ matchmaker # <-- your nats username should be printed here
 
 #### The final test
 
-The `bevygap_server_plugin` crate has an example (non-bevy) program that connects to NATS and prints a success message then exits.
+The `bevygap_shared` crate has an example (non-bevy) program that connects to NATS and prints a success message then exits.
 This will test that your environment variables are set correctly for bevygap:
 
 ```bash
-$ cargo run -p bevygap_server_plugin --example nats
+$ cargo run -p bevygap_shared --example nats
+     ...compiling...
+     Running `target/debug/examples/nats`
+2024-11-04T09:49:23.764924Z  INFO bevygap_shared: NATS: setting up, client name: bevygap_nats_test    
+2024-11-04T09:49:23.765494Z  INFO bevygap_shared: NATS: TLS is enabled    
+2024-11-04T09:49:23.765498Z  INFO bevygap_shared: NATS: connecting as 'matchmaker' to 1.2.3.4    
+2024-11-04T09:49:23.765512Z  INFO bevygap_shared: NATS: using self-signed CA: /Users/rj/Library/Application Support/mkcert/rootCA.pem    
+2024-11-04T09:49:23.777111Z  INFO bevygap_shared: 🟢 NATS: connected OK    
+2024-11-04T09:49:23.777121Z  INFO async_nats: event: connected
 NATS connected OK!
+
 ```
 
 If you made it this far, you've got a working NATS setup. Now on to the fun stuff.

@@ -14,5 +14,9 @@ bevy = {workspace = true, optional = true}
 async-nats.workspace = true
 log.workspace = true
 
+[dev-dependencies]
+tracing-subscriber.workspace = true
+tokio.workspace = true
+
 [lints]
 workspace = true

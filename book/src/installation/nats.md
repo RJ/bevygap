@@ -152,7 +152,7 @@ nats context save \
   --description="My NATS server" \
   --user="matchmaker" \
   --password="matchmaker" \
-  --ca="/Users/rj/Library/Application Support/mkcert/rootCA.pem" \
+  --tlsca="/Users/rj/Library/Application Support/mkcert/rootCA.pem" \
   --select \
   bevygap
 ```
