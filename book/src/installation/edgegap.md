@@ -1,4 +1,4 @@
-# Edgegap
+# Edgegap Setup
 
 Sign up for a free account at [Edgegap](https://edgegap.com).
 
@@ -79,12 +79,48 @@ Port 6420 is the port that `bevygap-spaceships` listens on. (ie: `0.0.0.0:6420`)
 
 Set the env vars that bevygap needs to connect to NATS:
 
-| Name          | Value           | Notes                      |
-| ------------- | --------------- | -------------------------- |
-| NATS_USER     | gameserver      | from your nats-server.conf |
-| NATS_PASSWORD | gameserver      | from your nats-server.conf |
-| NATS_HOST     | 1.2.3.4         | Your NATS server public IP |
-| NATS_CA       | /app/rootCA.pem | TODO                       |
+| Name          | Value      | Notes                      |
+| ------------- | ---------- | -------------------------- |
+| NATS_USER     | gameserver | from your nats-server.conf |
+| NATS_PASSWORD | gameserver | from your nats-server.conf |
+| NATS_HOST     | 1.2.3.4    | Your NATS server public IP |
+
+
+#### Providing the rootCA.pem file to the gameserver container
+
+If you're using a self-signed certificate for your NATS server, you need to provide the CA root certificate to the gameserver, otherwise it won't be able to verify the NATS server's certificate.
+
+Setting `NATS_CA` to the path to the rootCA.pem file works, but we didn't include the .pem file in the docker image.
+
+Setting `NATS_CA_CONTENTS` to the contents of the rootCA.pem file would work, except Edgegap limits ENVs to 255 bytes (I've asked them to increase this limit!).
+
+##### Slight Hack..
+To work around this, `bevygap_server_plugin` looks for a `--ca_contents 'XXXXX'` flag on startup, and if found, will write the contents to a temporary file and pass that as `NATS_CA` for you. The Edgegap dashboard doesn't support setting docker arguments for server startup, but does support it via the API.
+
+Use the `set-caroot-argument.sh` script to set the flag via the API:
+
+```bash
+$ ./utils/set-caroot-argument.sh 
+Usage: ./utils/set-caroot-argument.sh <appname> <appversion> <path to rootCA.pem file>
+
+$ ./utils/set-caroot-argument.sh "bevygap-spaceships" "1" "/Users/rj/Library/Application Support/mkcert/rootCA.pem"
+🔧 Sending PATCH command to https://api.edgegap.com/v1/app/bevygap-spaceships/version/1
+
+{"success":true,"version":{"arguments":"--ca_contents '-----BEGIN CERTIFICATE-----MIIE2zCCA0Og..snip...'...}}
+
+✅ OK. Deployments of bevygap-spaceships at version 1 will have --ca_contents '<...contents...>' passed as arguments.
+```
+
+You need to do this for each version. During devlopment, I've been reusing the version and simply bumping the container tag associated with that application version. Don't be tempted to rely on a 'latest' docker tag though, Edgegap's caching doesn't like that. Make sure to specify a new version each time.
+
+When adapting this process for your own gameserver, you could ship your rootCA.pem in the server's docker container,
+in which case just set `NATS_CA=/path/to/rootCA.pem` as an Environment Variable in the Edgegap dashboard.
+
+Alternatively, set up LetsEncrypt, get a trusted cert for your NATS server domain, and you won't need to provide the root CA file at all.
+
+<small>
+It's also possible to set up Edgegap "pull profiles" to yoink files from a configured S3 bucket on boot, but that is out of scope here..
+</small>
 
 ### Deploying a gameserver
 

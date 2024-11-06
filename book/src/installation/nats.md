@@ -54,7 +54,6 @@ authorization: {
         {user: "matchmaker", password: "matchmaker"},
         {user: "matchmaker_httpd", password: "matchmaker_httpd"},
         {user: "gameserver", password: "gameserver"},
-        {user: "webhook",    password: "webhook"},
     ]
 }
 
@@ -94,6 +93,9 @@ Make a new directory to work in:
 $ mkdir nats-bits
 $ cd nats-bits
 ```
+
+#### Configuring the NATS server
+
 Create a `docker-compose.yaml` file with the following contents:
 ```
 version: "3.5"
@@ -124,6 +126,7 @@ rj@myserver:~/nats-bits $ find .
 ./nats-config/nats-server-key.pem
 ./nats-config/nats-server-cert.pem
 ```
+#### Starting the NATS server
 
 Now you can start the server:
 ```bash
@@ -139,7 +142,7 @@ $ docker compose logs -f nats
 
 You should now be able to connect to your NATS server from your local machine using the public IP address. Docker usually manages to manipulate the firewall for you, to make it work. Let's test that.
 
-
+#### Back on your local machine
 
 Install the [nats-cli](https://docs.nats.io/using-nats/nats-tools/nats_cli) tool, to allow you to examine the NATS bus and key-values while your system is running.
 
@@ -157,7 +160,7 @@ nats context save \
   bevygap
 ```
 
-Now you can use the `nats` command to examine the NATS bus and key-values.
+Now you can use the `nats` command to access the server:
 
 ```bash
 $ nats server check connection
@@ -166,6 +169,6 @@ OK Connection OK:connected to nats://nats.example.com:4222 in 135.609292ms OK:rt
 ```
 Congratulations! You've now got a working NATS server, which you can connect to over the internet.
 
-I suggest you try the [NATS pub/sub walkthrough](https://docs.nats.io/nats-concepts/core-nats/pubsub/pubsub_walkthrough) to get a feel for how the nats-cli tool works.
+Consider trying the [NATS pub/sub walkthrough](https://docs.nats.io/nats-concepts/core-nats/pubsub/pubsub_walkthrough) to get a feel for how the nats-cli tool works.
 
 Next, we configure Bevygap so it can connect to your NATS server.

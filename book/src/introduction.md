@@ -17,7 +17,7 @@ In theory, it **will scale up** pretty well too. Edgegap will keep launching new
 * A shared crate, `bevygap_shared`, used to connect to the NATS message bus.
 * An example game, `bevygap-spaceships`, which is deployable to Edgegap using all of the above.
 
-![Bevygap Architecture](assets/bevygap-20241103.png)
+![Bevygap Architecture](assets/bevygap-20241105.png)
 
 ## Dev, test, deploy cycle
 

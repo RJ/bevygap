@@ -76,41 +76,92 @@ impl BevygapNats {
         Ok(())
     }
 
+    /// want to support multiple connection modes. In production, I have a domain name with
+    /// LetsEncrypt certs set up, so i just need to enable TLS and provide user/pass.
+    ///
+    /// In other scenarios I want to support self-signed certs, in which case we need to provide
+    /// the CA, so our NATS client can verify the server.
+    ///
+    /// TLS is assumed, and by default we expect a trusted (LetsEncrypt or similar) cert.
+    /// if the NATS_CA=/path/to/ca.pem env is set, we use that CA to verify the cert.
+    ///
+    /// If NATS_CA_CONTENTS is set, we write it to a temp file and use that as the CA.
+    ///
+    /// Setting NATS_INSECURE env var (to anything) will disable TLS entirely (still need user/pass)
     async fn connect_to_nats(nats_client_name: &str) -> Result<Client, async_nats::Error> {
-        info!("Setting up NATS, client name: {}", nats_client_name);
-        let nats_host = std::env::var("NATS_HOST").expect("missing NATS_HOST env");
+        info!("NATS: setting up, client name: {nats_client_name}");
+
+        let nats_insecure = std::env::var("NATS_INSECURE").is_ok();
+        let nats_self_signed_ca: Option<String> = std::env::var("NATS_CA").ok().or_else(|| {
+            // we write out the CA to a temp file, if provided in NATS_CA_CONTENTS
+            // this is useful for deploying containers on edgegap and injecting CA root certs.
+            //
+            // However, as of 5 November 2024, Edgegap limits you to 255 bytes in ENV vars
+            // so this is actually set by the server, from a command line arg.. see the book!
+            if let Ok(ca_contents) = std::env::var("NATS_CA_CONTENTS") {
+                let sanitised_nats_client_name = nats_client_name
+                    .chars()
+                    .filter(|c| c.is_ascii_alphanumeric() || *c == '-' || *c == '_')
+                    .collect::<String>();
+                let tmp_file =
+                    std::env::temp_dir().join(format!("rootCA-{sanitised_nats_client_name}.pem"));
+                std::fs::write(&tmp_file, ca_contents).unwrap();
+                Some(tmp_file.to_string_lossy().to_string())
+            } else {
+                None
+            }
+        });
+
+        let nats_host = std::env::var("NATS_HOST").expect("Missing NATS_HOST env");
         let nats_user = std::env::var("NATS_USER").expect("Missing NATS_USER env");
-        let nats_pass = std::env::var("NATS_PASS").expect("Missing NATS_PASS env");
-        let insecure = std::env::var("NATS_INSECURE")
-            .map(|_| true)
-            .unwrap_or(false);
-        // let nats_ca = std::env::var("NATS_CA").unwrap_or("./config/rootCA.pem".to_string());
+        let nats_pass = std::env::var("NATS_PASSWORD").expect("Missing NATS_PASSWORD env");
+
+        if nats_insecure {
+            warn!("😬 NATS: insecure - TLS is disabled.");
+        } else {
+            info!("NATS: TLS is enabled");
+        }
+
+        info!("NATS: connecting as '{nats_user}' to {nats_host}");
+
+        let mut nats_connection = async_nats::ConnectOptions::new()
+            .name(nats_client_name)
+            .user_and_password(nats_user, nats_pass)
+            .max_reconnects(10)
+            .require_tls(!nats_insecure);
+
+        if let Some(ca) = nats_self_signed_ca {
+            info!("NATS: using self-signed CA: {}", ca);
+            nats_connection = nats_connection.add_root_certificates(ca.into());
+        } else {
+            info!("NATS: expecting a trusted cert, no self-signed CA provided.");
+        }
+
+        let client = nats_connection.connect(nats_host).await?;
+        info!("🟢 NATS: connected OK");
+        Ok(client)
+
+        // if let Some(ca) = nats_self_signed_ca {
+        //     info!("NATS_SELF_SIGNED_CA: {}", ca);
+        //     let nats_ca = std::env::var("NATS_CA").unwrap_or("./config/rootCA.pem".to_string());
+        // }
         // let nats_cert =
         // std::env::var("NATS_CERT").unwrap_or("./config/client-cert.pem".to_string());
         // let nats_key = std::env::var("NATS_KEY").unwrap_or("./config/client-key.pem".to_string());
 
-        info!("NATS_HOST: {}", nats_host);
-        info!("NATS_USER: {}", nats_user);
-        if insecure {
-            info!("NATS_INSECURE: {}", insecure);
-        }
         // info!("NATS_CA: {}", nats_ca);
         // info!("NATS_CERT: {}", nats_cert);
         // info!("NATS_KEY: {}", nats_key);
 
-        let client = async_nats::ConnectOptions::new()
-            .name(nats_client_name)
-            .user_and_password(nats_user, nats_pass)
-            .max_reconnects(10)
-            .require_tls(!insecure)
-            // .add_root_certificates(nats_ca.into())
-            // .add_client_certificate(nats_cert.into(), nats_key.into())
-            .connect(nats_host)
-            .await?;
-
-        info!("🟢 NATS connected");
-
-        Ok(client)
+        // let client = async_nats::ConnectOptions::new()
+        //     .name(nats_client_name)
+        //     .user_and_password(nats_user, nats_pass)
+        //     .max_reconnects(10)
+        //     .require_tls(!insecure)
+        //     // .add_root_certificates(nats_ca.into())
+        //     // .add_client_certificate(nats_cert.into(), nats_key.into())
+        //     .connect(nats_host)
+        //     .await?;
     }
 
     pub async fn create_kv_active_connections(

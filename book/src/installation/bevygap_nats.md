@@ -8,13 +8,13 @@ Now that `nats-cli` can connect to your NATS server, and we know it's working, l
 
 The NATS connection code in `bevygap_shared` depends on the following environment variables to set up the NATS connection.
 
-| Variable         | Required | Description                                                                                   |
-| ---------------- | -------- | --------------------------------------------------------------------------------------------- |
-| NATS_HOST        | Yes      | NATS server address<br><small>eg: `nats.example.com:4222` or `1.2.3.4`</small>                |
-| NATS_USER        | Yes      | Username for NATS authentication                                                              |
-| NATS_PASSWORD    | Yes      | Password for NATS authentication                                                              |
-| NATS_CA          | No       | Path to CA root certificate for self-signed certs<br><small>eg: `/path/to/rootCA.pem`</small> |
-| NATS_CA_CONTENTS | No       | Contents of the CA file<br><small>gets written to tmp file and used as NATS_CA</small>        |
+| Variable         | Required | Description                                                                                                                                                                                                                                  |
+| ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NATS_HOST        | Yes      | NATS server address<br><small>eg: `nats.example.com:4222` or `1.2.3.4`</small>                                                                                                                                                               |
+| NATS_USER        | Yes      | Username for NATS authentication                                                                                                                                                                                                             |
+| NATS_PASSWORD    | Yes      | Password for NATS authentication                                                                                                                                                                                                             |
+| NATS_CA          | No       | Path to CA root certificate for self-signed certs<br><small>eg: `/path/to/rootCA.pem`</small>                                                                                                                                                |
+| NATS_CA_CONTENTS | No       | Contents of the CA file<br><small>gets written to tmp file and used as NATS_CA<br><span style="color:red">255 byte limit on edgegap for ENVS<br>see note about <code>set-caroot-argument.sh</code> in 'Edgegap Setup' section</span></small> |
 
 
 ### Create nats.env file

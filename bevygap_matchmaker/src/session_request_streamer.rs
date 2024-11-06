@@ -145,6 +145,7 @@ async fn stream_request_processor(
         session_get = get_session(state.configuration(), post_session.session_id.as_str())
             .await
             .map_err(|e| {
+                error!("get session error: {:?}", e);
                 EdgegapError::Io(std::io::Error::new(
                     std::io::ErrorKind::Other,
                     format!("get session error: {}", e),

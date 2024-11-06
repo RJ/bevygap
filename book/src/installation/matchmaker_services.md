@@ -70,6 +70,46 @@ One of the log lines should show you that the matchmaker webservice listens on p
 INFO bevygap_matchmaker_httpd: bevygap_matchmaker_httpd listening on 0.0.0.0:3000  
 ```
 
+## Testing the Matchmaker Webservice
+
+Let's test the matchmaker webservice without a game client. Open up your browser to <a href="http://localhost:3000" target="_new">http://localhost:3000</a> so the page has the correct security context.
+Find the developer tools console, and paste in this javascript to simulate a real client asking for a match over a websocket connection:
+
+```javascript
+const ws = new WebSocket("ws://localhost:3000/matchmaker/ws");
+
+ws.onopen = () => {
+    console.log("Connected to WebSocket");
+
+    const payload = {
+        client_ip: "81.128.157.123",
+        game: "bevygap-spaceships",
+        version: "1"
+    };
+    
+    ws.send(JSON.stringify(payload));
+    console.log("Sent payload:", payload);
+};
+
+ws.onmessage = (event) => {
+    console.log("Received message:", event.data);
+};
+
+ws.onclose = () => {
+    console.log("WebSocket connection closed");
+};
+```
+![Websocket test in browser](../assets/ws-test-js.png)
+
+
+If that worked, you will notice a new deployment is running in the Edgegap dashboard, and a new Edgegap session is active.
+
+After a minute or so, the matchmaker will realise that no game client ever consumed that connect token, and delete the Edgegap session.
+
+After 10 minutes of no sessions linked to the deployment, Edgegap will stop the deployment.
+
+Feel free to manually terminate it now.
+
 ## Shall we play a game?
 
 The matchmaking webservices are ready – time to connect with a game client!

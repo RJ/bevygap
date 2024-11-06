@@ -6,7 +6,7 @@ services:
       - "4222:4222"
     image: nats:2.10.21
     restart: unless-stopped
-    command: "--js --sd /data  --config /config/nats-server.conf"
+    command: "--config /config/nats-server.conf"
     volumes:
       - ./nats-config:/config
       - ./nats-data:/data

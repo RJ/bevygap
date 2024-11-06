@@ -203,3 +203,28 @@ requests to nats? no need for my hacky http client lib then.
 
 
 move matchmaker bevy/http bits into matchmaker crate too? flag to run bemw server and mm service in one binary, using a thread for mm?
+
+proto id and ly pkey needed in docker-compose for MM stuff too, perhaps a move to a standard `lightyear.env` file which lightyear itself reads too? could default to sane zeros defaults if missing, for dev.
+
+
+## How much of a pain is this to get running?
+
+## edgegap woes
+
+env vars limited to 255 bytes.
+to inject rootCA, patch app ver to pass as arg in dockerfile?
+```
+echo "{\"arguments\": \"--ca_contents '$(cat '/Users/rj/Library/Application Support/mkcert/rootCA.pem' | tr -d '\n')'\"}" | curl -X PATCH "https://api.edgegap.com/v1/app/APP_NAME/version/APP_VERSION" -H "Content-Type: application/json" -H "Authorization: $EDGEGAP_API_KEY" -d @- -o - | jq
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  4542  100  2809  100  1733   6261   3862 --:--:-- --:--:-- --:--:-- 10115
+{
+  "success": true,
+  "version": {
+    "arguments": "-----BEGIN CERTIFICATE-----MIIE2zCCA0OgAwIBAgIQIp2+EvTUW4CEukdOCpyPVNTANBgkqhkiG9w0BAQsFADCBhTEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMS0wKwYDVQQLDCRyakByam1zLmVkbXVuZC5ob3VzZSAoUmlja
+    ..SNIP..
+    UDXAuBxGZWN0G4UKLTfl5bbF6XNpP2tfs7nUViHGwURknX48JJK+78NiP3pcOycvM3TFzTd9LupPu8Mj5kYvIZepWtOuQPVxcPRrtUijh6gvUCSdBFpFxJ4Usyq6AUiue5xFo9jIs7q1Qx9amZfixeo5wleF5XVaEMVaBbPdA11gA1N4=-----END CERTIFICATE-----",
+    "command": null,
+etc..
+```
+

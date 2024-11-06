@@ -19,4 +19,11 @@ body="{\"arguments\": \"--ca_contents '$(cat "$cafile" | tr -d '\n')'\"}"
 url="https://api.edgegap.com/v1/app/$appname/version/$appver"
 #echo "url=$url"
 echo "🔧 Sending PATCH command to $url"
+echo 
 curl -X PATCH "$url" -H "Content-Type: application/json" -H "Authorization: $EDGEGAP_API_KEY" -d "$body" -o -
+echo
+if [ $? == 0 ]; then
+	echo "✅ OK. Deployments of $appname at version $appver will have --ca_contents '<...contents...>' passed as arguments." 
+else
+	echo "❌ Oh no."
+fi
