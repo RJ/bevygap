@@ -13,3 +13,6 @@ TODO: handle_request hook to verify session per client id?
             .connection_request_handler
             .handle_request(crate::prelude::ClientId::Netcode(token.client_id))
         {
+
+
+ cargo run -p bevygap_server_plugin --example nats

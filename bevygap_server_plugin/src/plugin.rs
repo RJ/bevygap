@@ -62,6 +62,14 @@ impl Plugin for BevygapServerPlugin {
 
         app.insert_resource(CertDigest(self.cert_digest.clone()));
 
+        // When using a self-signed cert for your NATS server, the server needs the root CA .pem file
+        // in order to verify the server's certificate. Since this file is around 2kB, and Edgegap
+        // limits you to 255 bytes in ENV vars, we set this from a command line arg instead.
+        //
+        // If present, we write the contents to an ENV var, which is later read by setup_nats().
+        // In future, we hope to just set this ENV var directly in the Edgegap Dashboard.
+        inject_ca_root_env_var_from_cmdline_arg();
+
         app.add_systems(Startup, setup_nats);
 
         app.observe(edgegap_context::fetch_context_on_nats_connected);
@@ -70,6 +78,31 @@ impl Plugin for BevygapServerPlugin {
 
         app.observe(handle_lightyear_client_connect);
         app.observe(handle_lightyear_client_disconnect);
+    }
+}
+
+/// If --ca_contents XXXXXX present on command line, set NATS_CA_CONTENTS to XXXXXX
+fn inject_ca_root_env_var_from_cmdline_arg() {
+    use std::env;
+    let args: Vec<_> = env::args().collect();
+    if args.len() < 2 {
+        return;
+    }
+    let mut found_flag = false;
+    for arg in args {
+        if found_flag {
+            let ca_root = arg.clone();
+            info!(
+                "Found --ca_contents, setting NATS_CA_CONTENTS to [{} bytes]",
+                ca_root.len()
+            );
+            env::set_var("NATS_CA_CONTENTS", ca_root);
+            return;
+        }
+        if arg == "--ca_contents" {
+            found_flag = true;
+            continue;
+        }
     }
 }
 
