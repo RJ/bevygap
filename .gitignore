@@ -7,3 +7,4 @@ nats-config
 nats-data
 .DS_Store
 publish-book.sh
+htdocs-book
