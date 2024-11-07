@@ -76,9 +76,7 @@ pub struct BevygapClientPlugin;
 
 impl Plugin for BevygapClientPlugin {
     fn build(&self, app: &mut App) {
-        // app.add_plugins(HttpClientPlugin);
         app.add_plugins(NfwsPlugin);
-        // app.register_request_type::<SessionRequestFeedback>();
         app.init_resource::<BevygapClientConfig>();
         app.init_state::<BevygapClientState>();
 

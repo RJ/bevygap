@@ -25,11 +25,6 @@ pub(crate) struct QsParams {
     client_ip: Option<String>,
 }
 
-// Chunked transfer to give streaming results
-// maybe the service immediately yields a key so you can sub to a stream like
-// session_requests.1234567890
-// and then results are streamed back on that?
-
 /// The handler for the HTTP request (this gets called when the HTTP request lands at the start
 /// of websocket negotiation). After this completes, the actual switching from HTTP to
 /// websocket protocol will occur.
@@ -50,6 +45,8 @@ pub(crate) async fn handler_websocket(
     ws.on_upgrade(move |socket| handle_socket(socket, client_ip, state))
 }
 
+/// Reads the initial RequestSession message from the client.
+/// Clients must sent this as the first message on connect, otherwise the connection is closed.
 async fn read_initial_request_message(
     socket: &mut WebSocket,
     timeout: Duration,
@@ -163,7 +160,7 @@ async fn handle_socket_inner(
 /// X-Forwarded-For header (for proxy setups)
 /// the source IP of the http client
 ///
-/// Additionally if they above yields a localhost address, we replace it with
+/// Additionally if the above yields a localhost address, we replace it with
 /// settings.fake_ip, which is also useful for dev.
 fn get_client_ip(
     params: &QsParams,
@@ -185,7 +182,6 @@ fn get_client_ip(
             }
         }
     }
-    // TODO this default IP should be configurable too, for easier dev
     if client_ip == "127.0.0.1" || client_ip == "::1" {
         // localhost tends to spawn deployments in random places..
         client_ip = state.settings.fake_ip.to_string();
