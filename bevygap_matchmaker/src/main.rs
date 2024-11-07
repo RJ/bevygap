@@ -13,7 +13,7 @@ use lightyear::connection::netcode::PRIVATE_KEY_BYTES;
 use log::*;
 use tracing_subscriber::{layer::*, util::*};
 
-use bevygap_shared::*;
+use bevygap_shared::nats::*;
 
 mod session_delete_worker;
 mod session_reaper;

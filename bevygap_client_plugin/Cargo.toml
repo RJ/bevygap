@@ -8,9 +8,14 @@ edition.workspace = true
 [dependencies]
 lightyear = {workspace = true, features = ["webtransport"]}
 bevy.workspace = true
-bevy_http_client.workspace = true
 base64.workspace = true
-serde.workspace = true
+tokio.workspace = true
+bevy_nfws.workspace = true
+serde_json.workspace = true
+bevygap_shared.workspace = true
+
+[dev-dependencies]
+bevy = {workspace = true, default-features = true}
 
 [lints]
 workspace = true

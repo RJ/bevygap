@@ -1,7 +1,6 @@
 use async_nats::client::PublishErrorKind;
-use axum::body::Body;
-use axum::extract::{Path, Request, State};
-use axum::http::{header, HeaderMap, HeaderValue};
+use axum::extract::{Request, State};
+use axum::http::HeaderMap;
 use axum::{
     extract::ws::CloseFrame,
     extract::ws::{Message, WebSocket, WebSocketUpgrade},
@@ -91,6 +90,7 @@ async fn read_initial_request_message(
 ) -> Result<RequestSession, String> {
     if let Ok(Some(msg)) = tokio::time::timeout(timeout, socket.recv()).await {
         if let Ok(msg) = msg {
+            info!("< {msg:?}");
             if let Message::Text(text) = msg {
                 match serde_json::from_str::<RequestSession>(&text) {
                     Ok(request) => Ok(request),
@@ -103,10 +103,12 @@ async fn read_initial_request_message(
                 Err(format!("Expected text message, got {msg:?}"))
             }
         } else {
-            Err("Failed to receive request message".to_string())
+            Err(format!("Failed to receive request message: {msg:?}"))
         }
     } else {
-        Err("Timeout waiting for websocket request message".to_string())
+        Err(format!(
+            "Timeout waiting for websocket request message: {timeout:?}"
+        ))
     }
 }
 
@@ -124,6 +126,7 @@ async fn handle_socket(mut socket: WebSocket, client_ip: String, state: Arc<AppS
                 .await;
         }
         Err(s) => {
+            warn!("{s}");
             let _ = socket.send(Message::Text(format!("ERR {s}"))).await;
             // let _ = socket
             //     .send(Message::Close(Some(CloseFrame {

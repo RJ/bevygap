@@ -1,4 +1,4 @@
-use bevygap_shared::*;
+use bevygap_shared::nats::*;
 // use tracing_subscriber;
 use tracing_subscriber::{layer::*, util::*};
 

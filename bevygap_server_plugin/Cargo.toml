@@ -6,7 +6,7 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
-bevygap_shared = { path = "../bevygap_shared" , features = ["bevy"]}
+bevygap_shared = {workspace = true, features = ["nats", "bevy"]}
 bevy.workspace = true
 bevy-tokio-tasks.workspace = true
 serde.workspace = true

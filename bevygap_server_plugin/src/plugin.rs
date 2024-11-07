@@ -1,21 +1,11 @@
-use std::sync::Arc;
-
-// use async_nats::jetstream;
-// use async_nats::jetstream::stream::StorageType;
-// use crate::arbitrium_env::ArbitriumEnv;
-// use crate::http_client::*;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
-// use bevy::tasks::block_on;
-use bevygap_shared::*;
-// use futures::StreamExt;
-// use std::str::from_utf8;
-// use std::time::Duration;
-
 use bevy_tokio_tasks::{TokioTasksPlugin, TokioTasksRuntime};
+use bevygap_shared::nats::*;
 use lightyear::connection::netcode::ClientId;
 use lightyear::connection::server::{ConnectionRequestHandler, DeniedReason};
 use lightyear::server::events::{ConnectEvent, DisconnectEvent};
+use std::sync::Arc;
 
 use crate::arbitrium_env::ArbitriumEnv;
 use crate::edgegap_context::{self, ArbitriumContext};

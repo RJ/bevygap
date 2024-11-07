@@ -13,7 +13,7 @@ use axum::{
     routing::{any, get},
     Router,
 };
-use bevygap_shared::*;
+use bevygap_shared::nats::*;
 use clap::Parser;
 use log::*;
 use serde::{de, Deserialize, Deserializer};
@@ -80,7 +80,7 @@ async fn main() {
     // to support multiple cors origins, we'd need to have a list, and check if the request is from
     // one of them, if so, return it as the cors header.
     let cors_layer = CorsLayer::new()
-        .allow_methods(tower_http::cors::Any) //[Method::GET, Method::POST, Method::CONNECT])
+        .allow_methods([Method::GET, Method::POST, Method::CONNECT])
         .allow_origin(
             settings
                 .allowed_origin()
