@@ -1,21 +1,14 @@
-// use async_nats::jetstream;
-// use async_nats::jetstream::stream::StorageType;
-// use crate::arbitrium_env::ArbitriumEnv;
-// use crate::http_client::*;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
-// use bevy::tasks::block_on;
-use bevygap_shared::*;
-// use futures::StreamExt;
-// use std::str::from_utf8;
-// use std::time::Duration;
-
 use bevy_tokio_tasks::{TokioTasksPlugin, TokioTasksRuntime};
+use bevygap_shared::nats::*;
 use lightyear::connection::netcode::ClientId;
+use lightyear::connection::server::{ConnectionRequestHandler, DeniedReason};
 use lightyear::server::events::{ConnectEvent, DisconnectEvent};
+use std::sync::Arc;
 
 use crate::arbitrium_env::ArbitriumEnv;
-use crate::edgegap_context_plugin::ArbitriumContext;
+use crate::edgegap_context::{self, ArbitriumContext};
 
 /// Plugin for gameservers that run on edgegap.
 #[derive(Default)]
@@ -39,11 +32,15 @@ impl BevygapServerPlugin {
 struct CertDigest(String);
 
 #[derive(Event)]
+pub struct NatsConnected;
+
+#[derive(Event)]
 pub struct BevygapReady;
 
 impl Plugin for BevygapServerPlugin {
     fn build(&self, app: &mut App) {
-        info!("BevygapServerPlugin::build");
+        app.add_plugins(TokioTasksPlugin::default());
+        // Load the Edgegap ENVs
         let arb_env = if self.mock_env {
             info!("Reading MOCK Arbitrium ENVs");
             ArbitriumEnv::from_example()
@@ -52,20 +49,50 @@ impl Plugin for BevygapServerPlugin {
             ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs")
         };
         app.insert_resource(arb_env);
+
         app.insert_resource(CertDigest(self.cert_digest.clone()));
-        app.add_plugins(TokioTasksPlugin::default());
-        // app.add_plugins(EdgegapContextPlugin);
+
+        // When using a self-signed cert for your NATS server, the server needs the root CA .pem file
+        // in order to verify the server's certificate. Since this file is around 2kB, and Edgegap
+        // limits you to 255 bytes in ENV vars, we set this from a command line arg instead.
+        //
+        // If present, we write the contents to an ENV var, which is later read by setup_nats().
+        // In future, we hope to just set this ENV var directly in the Edgegap Dashboard.
+        inject_ca_root_env_var_from_cmdline_arg();
+
         app.add_systems(Startup, setup_nats);
-        app.add_systems(
-            Update,
-            (
-                crate::edgegap_context_plugin::fetch_context.run_if(resource_added::<BevygapNats>),
-                context_added.run_if(resource_added::<ArbitriumContext>),
-            ),
-        );
+
+        app.observe(edgegap_context::fetch_context_on_nats_connected);
+        app.observe(send_context_to_nats);
+        app.observe(setup_connection_request_handler);
 
         app.observe(handle_lightyear_client_connect);
         app.observe(handle_lightyear_client_disconnect);
+    }
+}
+
+/// If --ca_contents XXXXXX present on command line, set NATS_CA_CONTENTS to XXXXXX
+fn inject_ca_root_env_var_from_cmdline_arg() {
+    use std::env;
+    let args: Vec<_> = env::args().collect();
+    if args.len() < 2 {
+        return;
+    }
+    let mut found_flag = false;
+    for arg in args {
+        if found_flag {
+            let ca_root = arg.clone();
+            info!(
+                "Found --ca_contents, setting NATS_CA_CONTENTS to [{} bytes]",
+                ca_root.len()
+            );
+            env::set_var("NATS_CA_CONTENTS", ca_root);
+            return;
+        }
+        if arg == "--ca_contents" {
+            found_flag = true;
+            continue;
+        }
     }
 }
 
@@ -89,7 +116,27 @@ fn handle_lightyear_client_connect(
     nats_sender.client_connected(client_id.to_bits());
 }
 
-fn context_added(
+/// We create a BevygapConnectionRequestHandler and store it in a resource.
+/// This is handed to lightyear, and used to accept or deny incoming client connections.
+fn setup_connection_request_handler(
+    _trigger: Trigger<NatsConnected>,
+    bgnats: Res<BevygapNats>,
+    mut commands: Commands,
+    mut server_config: ResMut<lightyear::server::config::ServerConfig>,
+) {
+    // we store this in a resource, because we'll need to push new data into it
+    let crh = BevygapConnectionRequestHandler::new(bgnats.clone());
+    let arc_crh = Arc::new(crh);
+    commands.insert_resource(CRH(arc_crh.clone()));
+    for net in server_config.net.iter_mut() {
+        net.set_connection_request_handler(arc_crh.clone());
+    }
+}
+
+/// Context loaded, nats connected: time to send our metadata to NATS,
+/// then trigger the ready event.
+fn send_context_to_nats(
+    _trigger: Trigger<edgegap_context::ContextLoaded>,
     context: Res<ArbitriumContext>,
     nats_sender: ResMut<NatsSender>,
     mut commands: Commands,
@@ -173,6 +220,7 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
 
         ctx.run_on_main_thread(move |ctx| {
             ctx.world.insert_resource(bgnats);
+            ctx.world.trigger(NatsConnected);
         })
         .await;
 
@@ -245,4 +293,76 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
             client.flush().await.expect("Failed to flush NATS");
         }
     });
+}
+
+// /// Reasons for denying a connection request
+// #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+// pub enum DeniedReason {
+//     ServerFull,
+//     Banned,
+//     InternalError,
+//     AlreadyConnected,
+//     TokenAlreadyUsed,
+//     InvalidToken,
+//     Custom(String),
+// }
+
+// / Trait for handling connection requests from clients.
+// pub trait ConnectionRequestHandler: Debug + Send + Sync {
+//     /// Handle a connection request from a client.
+//     /// Returns None if the connection is accepted,
+//     /// Returns Some(reason) if the connection is denied.
+//     fn handle_request(&self, client_id: ClientId) -> Option<DeniedReason>;
+// }
+
+#[derive(Resource)]
+pub struct CRH(Arc<BevygapConnectionRequestHandler>);
+
+/// Only accept connections where the ClientId is in NATS associated with a session.
+#[derive(Clone, Debug)]
+pub struct BevygapConnectionRequestHandler {
+    bgnats: BevygapNats,
+}
+
+// this is set as a arc dyn trait object.
+// perhaps we should push valid ClientIDs into this struct as they arrive in nats?
+// or lookup as needed? we can keep an arc ref to this in the server plugin, and hand a clone
+// of it for registering with lightyear.
+//
+// Reasons we might actually want to reply with:
+// Full  - no, mm should prevent this? maybe we do want this, in case of lobbies and races when users pick a server.
+// banned - no, mm prevents
+// internal error - maybe
+// already connected - if client id is already connected?
+// token already used - same as already used client id?
+// invalidtoken - yep, if not registered in nats
+// custom(string) - hmm.
+//
+// we don't want this to block, so i think we need to push data into it so it's always ready.
+impl BevygapConnectionRequestHandler {
+    pub fn new(bgnats: BevygapNats) -> Self {
+        Self { bgnats }
+    }
+}
+
+impl ConnectionRequestHandler for BevygapConnectionRequestHandler {
+    fn handle_request(
+        &self,
+        client_id: lightyear::connection::id::ClientId,
+    ) -> Option<DeniedReason> {
+        info!("BevygapConnectionRequestHandler({client_id})");
+        // TODO: check this ClientID is in nats, and there isn't already a player connected
+        // TODO: check server isn't full
+        None
+
+        // pub enum DeniedReason {
+        //     ServerFull,
+        //     Banned,
+        //     InternalError,
+        //     AlreadyConnected,
+        //     TokenAlreadyUsed,
+        //     InvalidToken,
+        //     Custom(String),
+        // }
+    }
 }

@@ -5,13 +5,8 @@ use crate::arbitrium_env::ArbitriumEnv;
 use bevy::prelude::*;
 use bevy_tokio_tasks::TokioTasksRuntime;
 
-pub struct EdgegapContextPlugin;
-
-impl Plugin for EdgegapContextPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, fetch_context);
-    }
-}
+#[derive(Event)]
+pub(crate) struct ContextLoaded;
 
 #[derive(Resource, Debug, Clone)]
 pub struct ArbitriumContext {
@@ -85,7 +80,11 @@ async fn fetch_context_from_api(
     })
 }
 
-pub fn fetch_context(runtime: ResMut<TokioTasksRuntime>, arb_env: Res<ArbitriumEnv>) {
+pub fn fetch_context_on_nats_connected(
+    _trigger: Trigger<crate::plugin::NatsConnected>,
+    runtime: ResMut<TokioTasksRuntime>,
+    arb_env: Res<ArbitriumEnv>,
+) {
     let context_url = arb_env.context_url.clone();
     let context_token = arb_env.context_token.clone();
     info!("Fetching context: {context_url} ::::  {context_token}");
@@ -107,6 +106,7 @@ pub fn fetch_context(runtime: ResMut<TokioTasksRuntime>, arb_env: Res<ArbitriumE
         info!("Got Context: {arb_context:?}");
         ctx.run_on_main_thread(move |ctx| {
             ctx.world.insert_resource(arb_context);
+            ctx.world.trigger(ContextLoaded);
         })
         .await;
     });

@@ -1,41 +1,99 @@
-version: "3.5"
 services:
 
-  # running nats cluster example: https://gist.github.com/wallyqs/5378f5abcbe4b1b683268cacf2b672d3
   nats:
     ports:
       - "4222:4222"
-      - "8222:8222"
-    image: nats
-    command: "--js --sd /data --tls --tlscert=/config/server-cert.pem --tlskey=/config/server-key.pem --tlscacert=/config/rootCA.pem"
+    image: nats:2.10.21
+    restart: unless-stopped
+    command: "--config /config/nats-server.conf"
     volumes:
       - ./nats-config:/config
       - ./nats-data:/data
 
-  httpd:
-    image: bevygap_httpd:latest
+  traefik:
+    container_name: traefik
+    image: traefik:3.2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      #- "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/traefik.yml
+    labels:
+      - "traefik.enable=true"
+
+  wasm_httpd:
+    container_name: wasm_httpd
+    image: bevygap-spaceships-wasm
     build:
-      context: .
-      dockerfile: ./bevygap_httpd/Dockerfile
+      context: ../bevygap-spaceships/
+      dockerfile: ../bevygap-spaceships/client/Dockerfile
+    restart: unless-stopped
     depends_on:
       - nats
-      - matchmaker
-    env_file:
-      - .matchmaker.env
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.wasm-httpd.rule=PathPrefix(`/bevygap-spaceships`)"
+      - "traefik.http.middlewares.test-stripprefix.stripprefix.prefixes=/bevygap-spaceships"
+      - "traefik.http.routers.wasm-httpd.middlewares=test-stripprefix"
+      - "traefik.http.services.wasm-httpd.loadbalancer.server.port=80"
 
-  matchmaker:
-    image: matchmaker:latest
+  bevygap_webhook_sink:
+    container_name: bevygap_webhook_sink
+    image: bevygap_webhook_sink
+    build:
+      context: .
+      dockerfile: ./bevygap_webhook_sink/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - nats
+    environment:
+      NATS_USER: "webhook"
+      NATS_PASS: "webhook"
+      NATS_HOST: "nats"
+      NATS_INSECURE: "set"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webhook.rule=PathPrefix(`/hook`)"
+      - "traefik.http.services.webhook.loadbalancer.server.port=3001"
+
+  bevygap_matchmaker:
+    container_name: bevygap_matchmaker
+    image: bevygap_matchmaker
     build:
       context: .
       dockerfile: ./bevygap_matchmaker/Dockerfile
-    command: --app-name spacepit_server --app-version v0.0.1
-    volumes:
-      - ./config:/config
+    restart: unless-stopped
     depends_on:
       - nats
-    # Specify the following in env file:
-    # NATS_HOST="nats.example.com:4222"
-    # NATS_USER=a
-    # NATS_PASS=b
+    environment:
+      NATS_USER: "matchmaker"
+      NATS_PASS: "matchmaker"
+      NATS_HOST: "nats"
+      NATS_INSECURE: "set"
     env_file:
-      - .matchmaker.env
+      - .edgegap.env
+    command: "--app-name bevygap-spaceships --app-version 1 --lightyear-protocol-id 80085  --lightyear-private-key '1,2,3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1'"
+
+  bevygap_matchmaker_httpd:
+    container_name: matchmaker_httpd
+    image: bevygap_matchmaker_httpd
+    build:
+      context: .
+      dockerfile: ./bevygap_matchmaker_httpd/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - nats
+      - bevygap_matchmaker
+    environment:
+      NATS_USER: "matchmaker_httpd"
+      NATS_PASS: "matchmaker_httpd"
+      NATS_HOST: "nats"
+      NATS_INSECURE: "set"
+    command: "--cors http://127.0.0.1"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.matchmaker.rule=PathPrefix(`/matchmaker`)"
+      - "traefik.http.services.matchmaker.loadbalancer.server.port=3000"
+      - "traefik.http.services.matchmaker.loadbalancer.responseforwarding.flushinterval=-1"

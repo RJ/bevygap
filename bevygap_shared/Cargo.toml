@@ -6,13 +6,20 @@ publish.workspace = true
 edition.workspace = true
 
 [features]
-default = []
+default = ["nats"]
+nats = ["dep:async-nats"]
 bevy = ["dep:bevy"]
 
 [dependencies]
 bevy = {workspace = true, optional = true}
-async-nats.workspace = true
+async-nats = {workspace = true, optional = true}
 log.workspace = true
+serde.workspace = true
+regex.workspace = true
+
+[dev-dependencies]
+tracing-subscriber.workspace = true
+tokio.workspace = true
 
 [lints]
 workspace = true

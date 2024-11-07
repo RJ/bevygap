@@ -57,7 +57,7 @@ async fn unclaimed_session_reaper(state: &MatchmakerState) -> Result<(), async_n
             }
         }
     }
-    Ok(())
+    // Ok(())
 }
 
 /// Deletes sessions once a gameserver removes the active_sessions KV entry.

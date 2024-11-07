@@ -8,10 +8,10 @@ use axum::{
     http::StatusCode,
     response::Html,
     response::{IntoResponse, Response},
-    routing::get,
+    routing::{any, get},
     Router,
 };
-use bevygap_shared::*;
+use bevygap_shared::nats::*;
 use clap::Parser;
 use log::*;
 use serde::{de, Deserialize, Deserializer};
@@ -23,6 +23,7 @@ use tower_http::cors::CorsLayer;
 use tracing_subscriber::{layer::*, util::*};
 
 mod session_request_handler;
+mod session_request_handler_ws;
 
 #[derive(Parser, Debug, Clone)]
 #[command(author, version, about, long_about = None)]
@@ -77,13 +78,21 @@ async fn main() {
     // to support multiple cors origins, we'd need to have a list, and check if the request is from
     // one of them, if so, return it as the cors header.
     let cors_layer = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST])
+        .allow_methods([Method::GET, Method::POST, Method::CONNECT])
         .allow_origin(
             settings
                 .allowed_origin()
                 .parse::<HeaderValue>()
                 .expect("failed parsing cors domain"),
         );
+
+    /*
+    {"client_ip": "81.128.157.123", "game": "bevygap-spaceships", "version": "1"}
+
+    Paste above request to:
+
+    docker run --rm -ti ghcr.io/vi/websocat:nightly ws://100.109.105.19:3000/matchmaker/ws
+     */
 
     // build our application with a route
     let app = Router::new()
@@ -93,6 +102,10 @@ async fn main() {
         .route(
             "/matchmaker/request/:game/:version",
             post(session_request_handler::session_chunked_responder),
+        )
+        .route(
+            "/matchmaker/ws",
+            any(session_request_handler_ws::handler_websocket),
         )
         .layer(cors_layer)
         .with_state(app_state);

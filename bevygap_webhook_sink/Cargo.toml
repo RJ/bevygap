@@ -6,13 +6,13 @@ publish.workspace = true
 edition.workspace = true
 
 [dependencies]
-axum = "0.7.7"
+axum.workspace = true
 tokio.workspace = true
 log.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-bevygap_shared = { path = "../bevygap_shared" }
-anyhow = "1.0"
+bevygap_shared = {workspace = true, features = ["nats"]}
+anyhow.workspace = true
 
 [lints]
 workspace = true

@@ -20,7 +20,7 @@ pub async fn delete_session_worker_supervisor(
         warn!("delete_session_worker exited, restarting after timeout");
         tokio::time::sleep(std::time::Duration::from_secs(30)).await;
     }
-    Ok(())
+    // Ok(())
 }
 
 async fn delete_session_worker(state: &MatchmakerState) -> Result<(), async_nats::Error> {
@@ -69,5 +69,5 @@ async fn delete_session_worker(state: &MatchmakerState) -> Result<(), async_nats
         tokio::time::sleep(std::time::Duration::from_millis(5000)).await;
     }
 
-    Ok(())
+    // Ok(())
 }

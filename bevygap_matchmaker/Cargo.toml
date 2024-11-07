@@ -6,27 +6,23 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
-bevygap_shared = { path = "../bevygap_shared" }
+bevygap_shared = {workspace = true, features = ["nats"]}
 futures.workspace = true
 futures-util.workspace = true
 tokio.workspace = true
 tokio-tungstenite.workspace = true
 time.workspace = true
-edgegap = {path = "../edgegap-client"}
-
+edgegap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 async-nats.workspace = true
-
 log.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-
 clap.workspace = true
 lightyear.workspace = true
 rand.workspace = true
 base64.workspace = true
-
 
 [lints]
 workspace = true

@@ -8,8 +8,9 @@ RUN cargo build --release -p bevygap_matchmaker
 # Now that we've compiled the server, we copy the required bits into the
 # small distroless image, which we'll use to run the server.
 
-# the :debug version includes a busybox shell
-FROM gcr.io/distroless/cc-debian12:debug
+# the :debug version includes a busybox shell, if you need it.
+# FROM gcr.io/distroless/cc-debian12:debug
+FROM gcr.io/distroless/cc-debian12
 COPY --from=build-env /app/target/release/bevygap_matchmaker /app/
 
 WORKDIR /app

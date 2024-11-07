@@ -7,7 +7,7 @@ use axum::{
     routing::post,
     Router,
 };
-use bevygap_shared::*;
+use bevygap_shared::nats::*;
 use log::*;
 use std::net::SocketAddr;
 use std::sync::Arc;
