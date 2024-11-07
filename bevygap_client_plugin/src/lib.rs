@@ -132,17 +132,12 @@ fn handle_matchmaker_response(
                     }
                     NfwsEvent::Connected => {
                         info!("Matchmaker: {rec:?}");
-                        let client_ip_str = if let Some(ref fake_client_ip) = config.fake_client_ip
-                        {
-                            format!("\"{}\"", fake_client_ip)
-                        } else {
-                            "null".to_string()
+                        let req = RequestSession {
+                            client_ip: config.fake_client_ip.clone(),
+                            game: config.game_name.clone(),
+                            version: config.game_version.clone(),
                         };
-                        // TODO meh
-                        let payload = format!(
-                            "{{\"client_ip\":{client_ip_str}, \"game\":\"{}\", \"version\":\"{}\"}}",
-                            config.game_name, config.game_version
-                        );
+                        let payload = serde_json::to_string(&req).unwrap();
                         info!("Sending payload: {payload}");
                         nfws.send_text(payload);
                     }

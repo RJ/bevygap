@@ -20,7 +20,6 @@ anyhow.workspace = true
 tower-http.workspace = true
 clap.workspace = true
 async-nats.workspace = true
-regex.workspace = true
 
 [lints]
 workspace = true

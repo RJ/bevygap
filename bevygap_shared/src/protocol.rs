@@ -38,3 +38,39 @@ impl fmt::Display for SessionRequestFeedback {
         }
     }
 }
+
+/// Send up the websocket to the matchmaker when a client wants to play.
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct RequestSession {
+    /// name of game to play
+    pub game: String,
+    /// version of game to play
+    pub version: String,
+    /// client ip address override
+    pub client_ip: Option<String>,
+}
+
+impl RequestSession {
+    pub fn game_name_and_version(&self) -> Result<(String, String), String> {
+        let name_pattern = regex::Regex::new(r"^[a-zA-Z0-9\s_-]+$").unwrap();
+        let ver_pattern = regex::Regex::new(r"^[a-zA-Z0-9\s_-]+$").unwrap();
+
+        if !name_pattern.is_match(&self.game) {
+            return Err("Game name invalid".to_string());
+        }
+
+        if !ver_pattern.is_match(&self.version) {
+            return Err("Game version invalid".to_string());
+        }
+
+        if self.game.len() > 30 {
+            return Err("Game name too long (max 30 chars)".to_string());
+        }
+
+        if self.version.len() > 30 {
+            return Err("Game version too long (max 30 chars)".to_string());
+        }
+
+        Ok((self.game.clone(), self.version.clone()))
+    }
+}
