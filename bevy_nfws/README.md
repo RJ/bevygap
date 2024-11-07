@@ -2,9 +2,8 @@
 
 No-frills websocket client, wasm + native.
 
-Uses tokio-tungstenite-wasm for websocket communication in an async task via bevy-tokio-tasks.
-
-Bunch of channels to bridge you into sync bevy-land.
+Uses tokio-tungstenite-wasm for websocket communication in an async task, and some channels 
+to bridge you into sync bevy-land.
 
 ### Example usage
 

@@ -8,9 +8,9 @@ edition.workspace = true
 [dependencies]
 bevy.workspace = true
 tokio-tungstenite-wasm = "0.3.1"
-bevy-tokio-tasks.workspace = true
+bevy_async_task.workspace = true
 futures-util.workspace = true
-tokio.workspace = true
+async-channel.workspace = true
 
 [lints]
 workspace = true

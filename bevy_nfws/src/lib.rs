@@ -1,7 +1,7 @@
+use async_channel::{unbounded, Receiver, Sender, TryRecvError};
 use bevy::prelude::*;
-use bevy_tokio_tasks::{TokioTasksPlugin, TokioTasksRuntime};
-use futures_util::{SinkExt, StreamExt};
-use tokio::sync::mpsc::{channel, error::TryRecvError, Receiver, Sender};
+use bevy_async_task::AsyncTaskPool;
+use futures_util::{select, FutureExt, SinkExt, StreamExt};
 use tokio_tungstenite_wasm::CloseCode;
 
 pub mod prelude {
@@ -12,16 +12,13 @@ pub struct NfwsPlugin;
 
 impl Plugin for NfwsPlugin {
     fn build(&self, app: &mut App) {
-        if !app.is_plugin_added::<TokioTasksPlugin>() {
-            app.add_plugins(TokioTasksPlugin::default());
-        }
         app.observe(start_new_ws_tasks);
     }
 }
 
 fn start_new_ws_tasks(
     trigger: Trigger<OnAdd, NfwsHandle>,
-    runtime: ResMut<TokioTasksRuntime>,
+    mut task_pool: AsyncTaskPool<()>,
     mut q: Query<&mut NfwsHandle>,
 ) {
     let mut wschan = q.get_mut(trigger.entity()).unwrap();
@@ -29,7 +26,7 @@ fn start_new_ws_tasks(
     let ev_tx = wschan.ev_tx.take().unwrap();
     let url = wschan.ws_url.clone();
     debug!("spawned ws task for {:?}", trigger.entity());
-    runtime.spawn_background_task(|_ctx| async move {
+    task_pool.spawn(async move {
         let ev_tx2 = ev_tx.clone();
         let ret = connect_websocket(url, cmd_rx, ev_tx).await;
         debug!("connect_websocket returned: {:?}", ret);
@@ -40,7 +37,7 @@ fn start_new_ws_tasks(
             Err(err) => {
                 let _ = ev_tx2.send(NfwsEvent::Error(err)).await;
             }
-        }
+        };
     });
 }
 
@@ -90,8 +87,8 @@ pub enum NfwsPollResult {
 
 impl NfwsHandle {
     pub fn new(ws_url: String) -> Self {
-        let (cmd_tx, cmd_rx) = channel::<NfwsCmd>(32);
-        let (ev_tx, ev_rx) = channel::<NfwsEvent>(32);
+        let (cmd_tx, cmd_rx) = unbounded::<NfwsCmd>();
+        let (ev_tx, ev_rx) = unbounded::<NfwsEvent>();
         Self {
             cmd_tx,
             cmd_rx: Some(cmd_rx),
@@ -105,35 +102,35 @@ impl NfwsHandle {
         match self.ev_rx.try_recv() {
             Ok(ev) => NfwsPollResult::Event(ev),
             Err(TryRecvError::Empty) => NfwsPollResult::Empty,
-            Err(TryRecvError::Disconnected) => NfwsPollResult::Closed,
+            Err(TryRecvError::Closed) => NfwsPollResult::Closed,
         }
     }
 
     pub fn send_text(&mut self, msg: String) -> bool {
-        self.cmd_tx
-            .blocking_send(NfwsCmd::SendTextMessage(msg))
-            .is_ok()
+        self.cmd_tx.try_send(NfwsCmd::SendTextMessage(msg)).is_ok()
     }
 }
 
 async fn connect_websocket(
     url: String,
-    mut cmd_rx: Receiver<NfwsCmd>,
+    cmd_rx: Receiver<NfwsCmd>,
     ev_tx: Sender<NfwsEvent>,
 ) -> Result<(), NfwsErr> {
     let _ = ev_tx.send(NfwsEvent::Connecting).await;
     let Ok(ws) = tokio_tungstenite_wasm::connect(url).await else {
         return Err(NfwsErr::Connecting);
     };
-    let (mut sender, mut receiver) = ws.split();
+    let (mut ws_sender, mut ws_receiver) = ws.split();
 
     debug!("Connected to ws server.");
     let _ = ev_tx.send(NfwsEvent::Connected).await;
 
     loop {
-        tokio::select! {
+        let mut ws_recv = ws_receiver.next().fuse();
+        let mut cmd_recv = Box::pin(cmd_rx.recv()).fuse();
+        select! {
             // Handle incoming messages from websocket
-            msg = receiver.next() => {
+            msg = ws_recv => {
                 match msg {
                     Some(Ok(msg)) => {
                         debug!("Received message from server: {:?}", msg);
@@ -171,40 +168,36 @@ async fn connect_websocket(
                 }
             }
 
-            // Handle commands from our application code
-            cmd =  cmd_rx.recv() => {
+            // // Handle commands from our application code
+            cmd = cmd_recv => {
                 debug!("ws cmd: {:?}", cmd);
                 match cmd {
-                    None => {
-                        debug!("ws channel closed");
+                    Err(e) => {
+                        info!("ws channel err {e:?}");
                         return Ok(());
                     }
-                    Some(cmd) => match cmd {
-                        NfwsCmd::SendTextMessage(msg) => {
-                            if let Err(e) = sender.send(tokio_tungstenite_wasm::Message::Text(msg)).await {
-                                return Err(NfwsErr::Sending(format!(
-                                    "Error sending message: {:?}",
-                                    e
-                                )));
-                            }
+                    Ok(NfwsCmd::SendTextMessage(msg)) => {
+                        if let Err(e) = ws_sender.send(tokio_tungstenite_wasm::Message::Text(msg)).await {
+                            return Err(NfwsErr::Sending(format!(
+                                "Error sending message: {:?}",
+                                e
+                            )));
                         }
-                        NfwsCmd::SendBinaryMessage(msg) => {
-                            if let Err(e) = sender.send(tokio_tungstenite_wasm::Message::Binary(msg)).await {
-                                return Err(NfwsErr::Sending(format!(
-                                    "Error sending message: {:?}",
-                                    e
-                                )));
-                            }
+                    }
+                    Ok(NfwsCmd::SendBinaryMessage(msg)) => {
+                        if let Err(e) = ws_sender.send(tokio_tungstenite_wasm::Message::Binary(msg)).await {
+                            return Err(NfwsErr::Sending(format!(
+                                "Error sending message: {:?}",
+                                e
+                            )));
                         }
-                        NfwsCmd::Disconnect => {
-                            debug!("Received disconnect command");
-                            break;
-                        }
+                    }
+                    Ok(NfwsCmd::Disconnect) => {
+                        debug!("Received disconnect command");
+                        break;
                     }
                 }
             }
-
-            // else => break
         }
     }
     debug!("ws async loop ending.");
