@@ -1,0 +1,589 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Bevygap DRAFT</title>
+                <meta name="robots" content="noindex" />
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="favicon.svg">
+                        <link rel="shortcut icon" href="favicon.png">
+                <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+                <link rel="stylesheet" href="css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="installation/nats.html"><strong aria-hidden="true">2.1.</strong> NATS Server Setup</a></li><li class="chapter-item expanded "><a href="installation/bevygap_nats.html"><strong aria-hidden="true">2.2.</strong> Bevygap NATS Setup</a></li><li class="chapter-item expanded "><a href="installation/edgegap.html"><strong aria-hidden="true">2.3.</strong> Edgegap Setup</a></li><li class="chapter-item expanded "><a href="installation/matchmaker_services.html"><strong aria-hidden="true">2.4.</strong> Matchmaker Services</a></li><li class="chapter-item expanded "><a href="installation/game_client.html"><strong aria-hidden="true">2.5.</strong> Game Client</a></li></ol></li><li class="chapter-item expanded "><a href="containerizing/index.html"><strong aria-hidden="true">3.</strong> Containerizing Services</a></li><li class="chapter-item expanded "><a href="development/index.html"><strong aria-hidden="true">4.</strong> Developing your Game</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Bevygap DRAFT</h1>
+
+                    <div class="right-buttons">
+                                                <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>Bevygap is a suite of tools to help you get your (bevy+lightyear) game running on Edgegap, so that servers are spun up and down in response to player demand, in appropriate locations. When players click &quot;connect&quot;, the system either picks an existing server nearby, or spins up a new one, which takes just a few seconds.</p>
+<h3 id="scaling-and-costs"><a class="header" href="#scaling-and-costs">Scaling and costs</a></h3>
+<p>It <strong>scales down to zero</strong> pretty well - Edgegap can be configured to terminate server instances with no players in the last 10 minutes, and you are only billed for server uptime. There's a small static cost to running your NATS server and matchmaking service. I'm running mine on the same linux server that hosts my personal website.</p>
+<p>In theory, it <strong>will scale up</strong> pretty well too. Edgegap will keep launching new servers for you and directing new players to them. Nice problem to have, and not one i've encountered yet :)</p>
+<h3 id="bevygap-components"><a class="header" href="#bevygap-components">Bevygap components</a></h3>
+<ul>
+<li>A bevy plugin for your gameserver, <code>bevygap_server_plugin</code></li>
+<li>A bevy plugin for your game clients, <code>bevygap_client_plugin</code></li>
+<li>A matchmaker service that talks to the Edgegap API, <code>bevygap_matchmaker</code></li>
+<li>A webserver frontend for your matchmaker service, that <code>bevygap_client_plugin</code> talks to: <code>bevygap_httpd</code> </li>
+<li>A shared crate, <code>bevygap_shared</code>, used to connect to the NATS message bus.</li>
+<li>An example game, <code>bevygap-spaceships</code>, which is deployable to Edgegap using all of the above.</li>
+</ul>
+<p><img src="assets/bevygap-20241105.png" alt="Bevygap Architecture" /></p>
+<h2 id="dev-test-deploy-cycle"><a class="header" href="#dev-test-deploy-cycle">Dev, test, deploy cycle</a></h2>
+<p>Day-to-day I still do everything locally (without docker or edgegap).
+Need to document how to configure bevygap to bypass and connect without a token. TODO.</p>
+<p>When it's time to deploy, just push a git tag, and the github action will containerize your server and push it to Edgegap's container registry.</p>
+<p>TODO flesh this out....</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<ul>
+<li>You need a publically accessible NATS server with a TLS certificate for Bevygap to work.</li>
+<li>Then we make sure Bevygap knows how to connect to your NATS server.</li>
+<li>We configure settings in the Edgegap dashboard, and create the gameserver docker image</li>
+<li>Set up the matchmaker webservice</li>
+<li>Finally, connect with the game client and see the whole thing in action.</li>
+</ul>
+<p>Later, we'll look at how to containerize the matchmaking services for production deployments</p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="nats---what-why-and-how"><a class="header" href="#nats---what-why-and-how">NATS - what, why, and how.</a></h2>
+<p>There has to be a way to communicate between the matchmaker and the gameservers. I chose NATS, because
+it's both a message bus and a key-value store, both of which are very handy for this kind of thing.</p>
+<p>It also allows you to run the matchmaker and other components on your local dev machine if you like, connect them to the production NATS server, and test using real gameservers on edgegap. This saves the hassle of doing a full deploy during the development cycle.</p>
+<p>In fact, this tutorial starts off with deploying a public NATS server, but running all the other components locally.
+The NATS server has to be public because the gameservers (running on Edgegap) need to connect to it. Later on, we'll cover deploying the matchmaking stuff in containers on your server.</p>
+<h3 id="creating-a-self-signed-tls-certificate-for-your-nats-server"><a class="header" href="#creating-a-self-signed-tls-certificate-for-your-nats-server">Creating a self-signed TLS certificate for your NATS server</a></h3>
+<p>We'll be running NATS server using docker, and you'll need a TLS certificate for it.
+The <a href="https://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls">NATS docs on TLS</a> are extensive, but here are the edited highlights:</p>
+<h3 id="making-certifcates"><a class="header" href="#making-certifcates">Making certifcates</a></h3>
+<p>Install <a href="https://github.com/FiloSottile/mkcert">mkcert</a></p>
+<p>Find the directory where <code>mkcert</code> puts its CA certificate. On my mac, this looks like:</p>
+<pre><code class="language-bash">$ mkcert -CAROOT
+/Users/rj/Library/Application Support/mkcert
+
+# Check for the rootCA.pem file:
+$ ls &quot;/Users/rj/Library/Application Support/mkcert&quot;
+rootCA-key.pem  rootCA.pem # &lt;-- this one
+</code></pre>
+<p>Now generate a certificate for your NATS server:</p>
+<pre><code class="language-bash">$ mkcert -cert-file nats-server-cert.pem -key-file nats-server-key.pem localhost ::1 nats
+</code></pre>
+<p>Make a <code>nats-config</code> directory, and copy the server certificate and key into it:</p>
+<pre><code class="language-bash">$ mkdir nats-config
+$ mv nats-server-cert.pem nats-server-key.pem ./nats-config/
+</code></pre>
+<p>When we run the NATS server in docker, we'll ensure this <code>nats-config</code> directory is available at <code>/config</code> inside the container. With this in mind, we create a <code>nats-server.conf</code> file that references the server certificate, and creates some username/password pairs.</p>
+<p>Don't forget to create real passwords before exposing this to the internet.</p>
+<p>Create <code>nats-config/nats-server.conf</code>:</p>
+<pre><code>listen: 0.0.0.0:4222
+
+authorization: {
+    users: [
+        {user: &quot;matchmaker&quot;, password: &quot;matchmaker&quot;},
+        {user: &quot;matchmaker_httpd&quot;, password: &quot;matchmaker_httpd&quot;},
+        {user: &quot;gameserver&quot;, password: &quot;gameserver&quot;},
+    ]
+}
+
+tls {
+  cert_file: &quot;/config/nats-server-cert.pem&quot;
+  key_file:  &quot;/config/nats-server-key.pem&quot;
+}
+
+jetstream {
+    # storage directory will be mapped for you by docker:
+    store_dir: /data
+    # 100MB = high but sane limits, which we don't expect to hit:
+    max_memory_store: 104857600
+    max_file_store: 104857600
+}
+</code></pre>
+<p>For a NATS client to connect, they will need the CA cert which signed the NATS server certificate, ie the <code>rootCA.pem</code> file – to verify the server's certificate.</p>
+<p>We'll ship this file in the gameserver docker image, and make it available to the matchmaker and other services that establish NATS connections.</p>
+<blockquote>
+<p><strong>Self-signed vs Trusted CAs</strong>
+This can all be avoided if you use a certificate authority that is already trusted, such as LetsEncrypt. In my deployment, my NATS server reuses a certificate generated for my domain name by Traefik, which is already trusted by browsers and the NATS clients. No difference in 'how secure', and this tutorial will assume we use self-signed for now.</p>
+</blockquote>
+<h2 id="deploying-the-nats-server"><a class="header" href="#deploying-the-nats-server">Deploying the NATS server</a></h2>
+<p>Now you need to run a nats-server docker container on a machine that is publically accessible on the internet. Hopefully you have a cheap linux server you can use. Mine runs ubuntu. Doesn't matter, as long as you can install docker on it. The gameserver won't run here, just the nats, and matchmaking stuff (pretty lightweight).</p>
+<pre><code class="language-bash"># Connect to your remote server (which has a public IP address)
+$ ssh myserver
+</code></pre>
+<p>Make a new directory to work in:</p>
+<pre><code class="language-bash">$ mkdir nats-bits
+$ cd nats-bits
+</code></pre>
+<h4 id="configuring-the-nats-server"><a class="header" href="#configuring-the-nats-server">Configuring the NATS server</a></h4>
+<p>Create a <code>docker-compose.yaml</code> file with the following contents:</p>
+<pre><code>version: &quot;3.5&quot;
+services:
+  nats:
+    ports:
+      - &quot;4222:4222&quot;
+    image: nats:2.10.21
+    restart: unless-stopped
+    command: &quot;--config /config/nats-server.conf&quot;
+    volumes:
+      - ./nats-config:/config
+      - ./nats-data:/data
+</code></pre>
+<p>Note how the <code>volumes:</code> section maps your config directory to <code>/config</code>. An empty <code>nats-data</code> directory will be created for you automatically by docker.</p>
+<p>Into your <code>nats-bits</code> directory on the remote server, copy your <code>nats-config</code> directory you made earlier.</p>
+<p>Verify all the files are in the right place:</p>
+<pre><code class="language-bash">rj@myserver:~/nats-bits $ find .
+.
+./docker-compose.yaml
+./nats-config
+./nats-config/nats-server.conf
+./nats-config/nats-server-key.pem
+./nats-config/nats-server-cert.pem
+</code></pre>
+<h4 id="starting-the-nats-server"><a class="header" href="#starting-the-nats-server">Starting the NATS server</a></h4>
+<p>Now you can start the server:</p>
+<pre><code class="language-bash"># NB !!! older docker installs use &quot;docker-compose&quot;, newer use &quot;docker compose&quot;
+#        so if one doesn't work, try the other.
+#
+# this starts up in detached mode (in the background)
+$ docker compose up -d
+
+# Check logs, Control-C to exit:
+$ docker compose logs -f nats
+</code></pre>
+<p>You should now be able to connect to your NATS server from your local machine using the public IP address. Docker usually manages to manipulate the firewall for you, to make it work. Let's test that.</p>
+<h4 id="back-on-your-local-machine"><a class="header" href="#back-on-your-local-machine">Back on your local machine</a></h4>
+<p>Install the <a href="https://docs.nats.io/using-nats/nats-tools/nats_cli">nats-cli</a> tool, to allow you to examine the NATS bus and key-values while your system is running.</p>
+<p>Create a <a href="https://docs.nats.io/using-nats/nats-tools/nats_cli">nats context to use with <code>nats-cli</code></a>. Again, NATS docs are good, edited highlights follow:</p>
+<pre><code class="language-bash"># Change the server IP/hostname, the ca path, and the user/password to match your setup.
+nats context save \
+  --server=&quot;nats://1.2.3.4&quot; \
+  --description=&quot;My NATS server&quot; \
+  --user=&quot;matchmaker&quot; \
+  --password=&quot;matchmaker&quot; \
+  --tlsca=&quot;/Users/rj/Library/Application Support/mkcert/rootCA.pem&quot; \
+  --select \
+  bevygap
+</code></pre>
+<p>Now you can use the <code>nats</code> command to access the server:</p>
+<pre><code class="language-bash">$ nats server check connection
+OK Connection OK:connected to nats://nats.example.com:4222 in 135.609292ms OK:rtt time 25.149083ms OK:round trip took 0.025140s | connect_time=0.1356s;0.5000;1.0000 rtt=0.0251s;0.5000;1.0000 request_time=0.0251s;0.5000;1.0000
+
+</code></pre>
+<p>Congratulations! You've now got a working NATS server, which you can connect to over the internet.</p>
+<p>Consider trying the <a href="https://docs.nats.io/nats-concepts/core-nats/pubsub/pubsub_walkthrough">NATS pub/sub walkthrough</a> to get a feel for how the nats-cli tool works.</p>
+<p>Next, we configure Bevygap so it can connect to your NATS server.</p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="bevygap-nats-setup"><a class="header" href="#bevygap-nats-setup">Bevygap NATS Setup</a></h2>
+<p>Now that <code>nats-cli</code> can connect to your NATS server, and we know it's working, let's ensure that the bevygap code can connect too.</p>
+<h3 id="bevygap-required-environment-variables"><a class="header" href="#bevygap-required-environment-variables">Bevygap Required Environment Variables</a></h3>
+<p><code>bevygap_matchmaker</code>, <code>bevygap_httpd</code>,and the gameservers (via <code>bevygap_server_plugin</code>) need to connect to NATS.</p>
+<p>The NATS connection code in <code>bevygap_shared</code> depends on the following environment variables to set up the NATS connection.</p>
+<table><thead><tr><th>Variable</th><th>Required</th><th>Description</th></tr></thead><tbody>
+<tr><td>NATS_HOST</td><td>Yes</td><td>NATS server address<br><small>eg: <code>nats.example.com:4222</code> or <code>1.2.3.4</code></small></td></tr>
+<tr><td>NATS_USER</td><td>Yes</td><td>Username for NATS authentication</td></tr>
+<tr><td>NATS_PASSWORD</td><td>Yes</td><td>Password for NATS authentication</td></tr>
+<tr><td>NATS_CA</td><td>No</td><td>Path to CA root certificate for self-signed certs<br><small>eg: <code>/path/to/rootCA.pem</code></small></td></tr>
+<tr><td>NATS_CA_CONTENTS</td><td>No</td><td>Contents of the CA file<br><small>gets written to tmp file and used as NATS_CA<br><span style="color:red">255 byte limit on edgegap for ENVS<br>see note about <code>set-caroot-argument.sh</code> in 'Edgegap Setup' section</span></small></td></tr>
+</tbody></table>
+<h3 id="create-natsenv-file"><a class="header" href="#create-natsenv-file">Create nats.env file</a></h3>
+<p>Back on your local machine, in the bevygap directory, copy <code>nats.env.example</code> to <code>nats.env</code>,
+and edit it with your server's IP address, nats user, nats password, and path to CA certificate.</p>
+<p><strong>nats.env:</strong></p>
+<pre><code>NATS_USER=matchmaker
+NATS_PASSWORD=matchmaker
+NATS_HOST=1.2.3.4
+NATS_CA=&quot;/Users/rj/Library/Application Support/mkcert/rootCA.pem&quot;
+</code></pre>
+<p>Our <code>docker-compose.yaml</code> file will apply these environment variables to containers we run, but we 
+also want to set them in our shell, before we run (eg) the bevygap matchmaker service using <code>cargo run</code>.</p>
+<pre><code class="language-bash"># Setting environment variables in bash, on linux/mac
+export NATS_USER=....
+export NATS_PASSWORD=....
+# Bash trick to set them from the .env file:
+set -a &amp;&amp; . ./nats.env &amp;&amp; set +a
+</code></pre>
+<pre><code># How do you do this in windows? something like this maybe:
+setx NATS_USER &quot;matchmaker&quot;
+</code></pre>
+<p>Verify your environment variables are set:</p>
+<pre><code class="language-bash">$ echo $NATS_USER
+matchmaker # &lt;-- your nats username should be printed here
+</code></pre>
+<h4 id="the-final-test"><a class="header" href="#the-final-test">The final test</a></h4>
+<p>The <code>bevygap_shared</code> crate has an example (non-bevy) program that connects to NATS and prints a success message then exits.
+This will test that your environment variables are set correctly for bevygap:</p>
+<pre><code class="language-bash">$ cargo run -p bevygap_shared --example nats
+     ...compiling...
+     Running `target/debug/examples/nats`
+2024-11-04T09:49:23.764924Z  INFO bevygap_shared: NATS: setting up, client name: bevygap_nats_test    
+2024-11-04T09:49:23.765494Z  INFO bevygap_shared: NATS: TLS is enabled    
+2024-11-04T09:49:23.765498Z  INFO bevygap_shared: NATS: connecting as 'matchmaker' to 1.2.3.4    
+2024-11-04T09:49:23.765512Z  INFO bevygap_shared: NATS: using self-signed CA: /Users/rj/Library/Application Support/mkcert/rootCA.pem    
+2024-11-04T09:49:23.777111Z  INFO bevygap_shared: 🟢 NATS: connected OK    
+2024-11-04T09:49:23.777121Z  INFO async_nats: event: connected
+NATS connected OK!
+
+</code></pre>
+<p>If you made it this far, you've got a working NATS setup. Now on to the fun stuff.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="edgegap-setup"><a class="header" href="#edgegap-setup">Edgegap Setup</a></h1>
+<p>Sign up for a free account at <a href="https://edgegap.com">Edgegap</a>.</p>
+<p>Free accounts are limited to a single &quot;deployment&quot; (in Edgegap vernacular, a deployment is a single instance of your gameserver running on their infrastructure), which is fine for testing and development.</p>
+<p>From the Edgegap dashboard, find your API key.</p>
+<p>Put it in <code>edgegap.env</code>, like this:</p>
+<p><strong>edgegap.env:</strong></p>
+<pre><code>EDGEGAP_API_KEY=&quot;token asjhgaskjdhasd-kjhasd-asd-asd-asd&quot;
+</code></pre>
+<h3 id="deploying-a-gameserver-to-edgegap"><a class="header" href="#deploying-a-gameserver-to-edgegap">Deploying a gameserver to Edgegap</a></h3>
+<p>Fork the <a href="https://github.com/RJ/bevygap-spaceships/">bevygap-spaceships</a> repository into your own github account. 
+This is the Lightyear &quot;spaceships&quot; example game, modified to run as a headless server and client that expects to connect using Webtransport (and is thus WASM-compatible).</p>
+<p>To build the gameserver docker image with Github Actions, you must tell github some of your credentials.</p>
+<p>Visit the &quot;Container Registry&quot; page on the Edgegap dashboard, to see the credentials you need to push
+docker images to Edgegap's container registry.</p>
+<p>On Github, go to the <code>Settings / Secrets and variables / Actions</code> page of your newly forked bevygap-spaceships repo, and add these secrets:</p>
+<p>| Secret Name             | Example value                                   |
+| ----------------------- | ----------------------------------------------- |
+| EDGEGAP_IMAGE_NAME      | metabrew-kfk5fha5fsct/bevygap-spaceships-server |
+| EDGEGAP_DOCKER_REGISTRY | registry.edgegap.com                            |
+| EDGEGAP_DOCKER_USERNAME | robot$metabrew-kfk5fha5fsct+client-push         |
+| EDGEGAP_DOCKER_PASSWORD | ....password from edgegap dashboard...          |</p>
+<h3 id="building-the-gameserver"><a class="header" href="#building-the-gameserver">Building the gameserver</a></h3>
+<p>To trigger the github action that builds the gameserver docker image and publishes it to Edgegap's container registry, either commit a new git tag, or visit the &quot;Actions&quot; page of the repo, select the &quot;Build server&quot; action, and click &quot;Run workflow&quot;. Enter a version like <code>v1.0.0</code>.</p>
+<p>At the time of writing, this was taking between 10 and 15 minutes to complete. This time can probably be reduced with some docker/github/caching trickery.</p>
+<p>Once it completes, check the Edgegap container registry page to see that the image was published.</p>
+<h3 id="make-an-edgegap-application"><a class="header" href="#make-an-edgegap-application">Make an Edgegap Application</a></h3>
+<p>Now we configure an Edgegap Application.</p>
+<p>In the Edgegap dashboard, under &quot;Applications&quot;, create a new application called <code>bevygap-spaceships</code>. Set it to use the Edgegap container registry, select the image you published (eg: <code>youruser-abc123/bevygap-spaceships-server</code>), and choose the tag you used when building the server, eg <code>1.0.0</code>.</p>
+<p>Other settings:</p>
+<table><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody>
+<tr><td>Session Type</td><td>Seat</td></tr>
+<tr><td>Session Sockets</td><td>6</td></tr>
+<tr><td>Empty Time to Live</td><td>10 minutes</td></tr>
+<tr><td>Auto Deploy</td><td>Enabled</td></tr>
+</tbody></table>
+<h3 id="add-a-port-mapping"><a class="header" href="#add-a-port-mapping">Add a Port Mapping</a></h3>
+<p>You must tell Edgegap what port(s) your gameserver listens on. These will be mapped to a different external port for clients to use when connecting.</p>
+<p>Add a port with these settings:</p>
+<table><thead><tr><th>Setting</th><th>Value</th></tr></thead><tbody>
+<tr><td>Protocol</td><td>UDP</td></tr>
+<tr><td>Port</td><td>6420</td></tr>
+<tr><td>Name</td><td>server</td></tr>
+<tr><td>Verifications</td><td>true</td></tr>
+<tr><td>TLS Upgrade</td><td>false</td></tr>
+</tbody></table>
+<p>Port 6420 is the port that <code>bevygap-spaceships</code> listens on. (ie: <code>0.0.0.0:6420</code>)</p>
+<h3 id="add-environment-variables"><a class="header" href="#add-environment-variables">Add Environment Variables</a></h3>
+<p>Set the env vars that bevygap needs to connect to NATS:</p>
+<table><thead><tr><th>Name</th><th>Value</th><th>Notes</th></tr></thead><tbody>
+<tr><td>NATS_USER</td><td>gameserver</td><td>from your nats-server.conf</td></tr>
+<tr><td>NATS_PASSWORD</td><td>gameserver</td><td>from your nats-server.conf</td></tr>
+<tr><td>NATS_HOST</td><td>1.2.3.4</td><td>Your NATS server public IP</td></tr>
+</tbody></table>
+<h4 id="providing-the-rootcapem-file-to-the-gameserver-container"><a class="header" href="#providing-the-rootcapem-file-to-the-gameserver-container">Providing the rootCA.pem file to the gameserver container</a></h4>
+<p>If you're using a self-signed certificate for your NATS server, you need to provide the CA root certificate to the gameserver, otherwise it won't be able to verify the NATS server's certificate.</p>
+<p>Setting <code>NATS_CA</code> to the path to the rootCA.pem file works, but we didn't include the .pem file in the docker image.</p>
+<p>Setting <code>NATS_CA_CONTENTS</code> to the contents of the rootCA.pem file would work, except Edgegap limits ENVs to 255 bytes (I've asked them to increase this limit!).</p>
+<h5 id="slight-hack"><a class="header" href="#slight-hack">Slight Hack..</a></h5>
+<p>To work around this, <code>bevygap_server_plugin</code> looks for a <code>--ca_contents 'XXXXX'</code> flag on startup, and if found, will write the contents to a temporary file and pass that as <code>NATS_CA</code> for you. The Edgegap dashboard doesn't support setting docker arguments for server startup, but does support it via the API.</p>
+<p>Use the <code>set-caroot-argument.sh</code> script to set the flag via the API:</p>
+<pre><code class="language-bash">$ ./utils/set-caroot-argument.sh 
+Usage: ./utils/set-caroot-argument.sh &lt;appname&gt; &lt;appversion&gt; &lt;path to rootCA.pem file&gt;
+
+$ ./utils/set-caroot-argument.sh &quot;bevygap-spaceships&quot; &quot;1&quot; &quot;/Users/rj/Library/Application Support/mkcert/rootCA.pem&quot;
+🔧 Sending PATCH command to https://api.edgegap.com/v1/app/bevygap-spaceships/version/1
+
+{&quot;success&quot;:true,&quot;version&quot;:{&quot;arguments&quot;:&quot;--ca_contents '-----BEGIN CERTIFICATE-----MIIE2zCCA0Og..snip...'...}}
+
+✅ OK. Deployments of bevygap-spaceships at version 1 will have --ca_contents '&lt;...contents...&gt;' passed as arguments.
+</code></pre>
+<p>You need to do this for each version. During devlopment, I've been reusing the version and simply bumping the container tag associated with that application version. Don't be tempted to rely on a 'latest' docker tag though, Edgegap's caching doesn't like that. Make sure to specify a new version each time.</p>
+<p>When adapting this process for your own gameserver, you could ship your rootCA.pem in the server's docker container,
+in which case just set <code>NATS_CA=/path/to/rootCA.pem</code> as an Environment Variable in the Edgegap dashboard.</p>
+<p>Alternatively, set up LetsEncrypt, get a trusted cert for your NATS server domain, and you won't need to provide the root CA file at all.</p>
+<small>
+It's also possible to set up Edgegap "pull profiles" to yoink files from a configured S3 bucket on boot, but that is out of scope here..
+</small>
+<h3 id="deploying-a-gameserver"><a class="header" href="#deploying-a-gameserver">Deploying a gameserver</a></h3>
+<p>Once we have the server image published and the application version configured correctly, deployments should work.</p>
+<p>Typically the matchmaker triggers a deployment for you, but to test, we can deploy manually, and verify the server starts up OK.</p>
+<blockquote>
+<p><strong>Why not watch NATS traffic for this bit?</strong>
+<br>Subscribe to the everything wildcard in nats from your local machine.
+<br> A server starting up will publish something:
+<br>TODO: lookup the actual NATS topic i'm using instead of '&gt;'</p>
+<pre><code class="language-bash">nats sub '&gt;'
+</code></pre>
+</blockquote>
+<p>Go to &quot;Deployments&quot; in the Edgegap dashboard, &quot;Create Deployment&quot;, select our application and version, and click &quot;Deploy&quot;.</p>
+<p>The list of IP addresses are placeholders, and edgegap will use the geolocation of those IPs to figure out where in the world to run the server. Normally those are player IPs.</p>
+<p>Once it starts, have a look at the &quot;Container Logs&quot; tab.  All being well, it will have connected to NATS and be waiting for clients to connect.</p>
+<p>The &quot;Deployment Details&quot; also shows you the port mapping, so you can see the external port that maps to the internal 6420 port. You won't be able to connect a client to it just yet – the next step is the matchmaker service that issues valid Lightyear connect tokens.</p>
+<p>Use the &quot;Terminate Deployment&quot; button to stop the server. The next time it starts up should be in response to a matchmaker request.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="matchmaker-services"><a class="header" href="#matchmaker-services">Matchmaker Services</a></h1>
+<p>To review, so far we have a public NATS server, and Edgegap is ready to deploy instances of our gameserver.</p>
+<p>The next step is to configure the matchmaker services.</p>
+<p>The game will talk to the matchmaker webservice to say &quot;i want to play&quot;. The matchmaker will then make requests to the Edgegap API to find or start a server to play on, create a Lightyear Connect Token, and reply to the game client with something that looks like this:</p>
+<p><strong>Example successful response from matchmaker:</strong></p>
+<pre><code class="language-json">{
+    token: &quot;TkVUQ09ERSAxLjAyANU4AQAAAAAAxV...snip...&quot;,
+    ip: &quot;172.104.236.32&quot;,
+    port: 30004,
+    cert_digest: &quot;e3:76:4d:86:6c:11:d1:96...snip...&quot;
+} 
+</code></pre>
+<p>The <code>ip</code> and <code>port</code> are the public IP and external port of the gameserver deployment on Edgegap.
+The <code>token</code> is a Lightyear Connect Token that the client has to pass to the gameserver when connecting. Behind the scenes this is linked to an Edgegap session ID.
+The <code>cert_digest</code> allows browsers to verify the WebTransport server's self-signed certificate. This is automatically generated by gameservers when they start up.</p>
+<p>Once the game client has this response, it triggers Lightyear to make the connection to the gameserver.</p>
+<h2 id="to-docker-or-not-to-docker"><a class="header" href="#to-docker-or-not-to-docker">To docker or not to docker?</a></h2>
+<p>I'll show how to start the services without docker, because it's easier to test and develop them this way. Know that there are github actions that will build and containerize all this, so you can run them alongside the NATS server with docker-compose. (explanation of this to follow in a later section.)</p>
+<h2 id="running-the-matchmaker-service"><a class="header" href="#running-the-matchmaker-service">Running the Matchmaker Service</a></h2>
+<p>Make sure your shell has the NATS and Edgegap environment variables set:</p>
+<pre><code class="language-bash">set -a &amp;&amp; . ./nats.env &amp;&amp; set +a
+set -a &amp;&amp; . ./edgegap.env &amp;&amp; set +a
+</code></pre>
+<p>Run the matchmaker. This is the service that talks to Edgegap, and also generates Lightyear Connect Tokens.
+It needs to know the lightyear server private key and protocol id to make the tokens.</p>
+<p>At the moment, the lightyear private key and protocol id are compiled into the gameserver.
+Search the <code>bevygap-spaceships</code> code for <code>PRIVATE_KEY</code> and <code>PROTOCOL_ID</code> to find them, hopefully these are still the correct values:</p>
+<pre><code class="language-bash">cargo run -p bevygap_matchmaker -- \
+  --app-name bevygap-spaceships \
+  --app-version 1 \
+  --lightyear-protocol-id 80085 \
+  --lightyear-private-key '1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1'
+</code></pre>
+<h2 id="running-the-matchmaker-webservice"><a class="header" href="#running-the-matchmaker-webservice">Running the Matchmaker Webservice</a></h2>
+<p>The matchmaker is listening to a NATS topic, ready to create sessions. The webservice exposes this via HTTP (websockets) to game clients.</p>
+<p>In another shell, set your NATS environment variables:</p>
+<pre><code class="language-bash">set -a &amp;&amp; . ./nats.env &amp;&amp; set +a
+</code></pre>
+<p>And run:</p>
+<pre><code class="language-bash">cargo run -p bevygap_matchmaker_httpd -- --cors http://127.0.0.1
+</code></pre>
+<p>One of the log lines should show you that the matchmaker webservice listens on port 3000:</p>
+<pre><code>INFO bevygap_matchmaker_httpd: bevygap_matchmaker_httpd listening on 0.0.0.0:3000  
+</code></pre>
+<h2 id="testing-the-matchmaker-webservice"><a class="header" href="#testing-the-matchmaker-webservice">Testing the Matchmaker Webservice</a></h2>
+<p>Let's test the matchmaker webservice without a game client. Open up your browser to <a href="http://localhost:3000" target="_new">http://localhost:3000</a> so the page has the correct security context.
+Find the developer tools console, and paste in this javascript to simulate a real client asking for a match over a websocket connection:</p>
+<pre><code class="language-javascript">const ws = new WebSocket(&quot;ws://localhost:3000/matchmaker/ws&quot;);
+
+ws.onopen = () =&gt; {
+    console.log(&quot;Connected to WebSocket&quot;);
+
+    const payload = {
+        client_ip: &quot;81.128.157.123&quot;,
+        game: &quot;bevygap-spaceships&quot;,
+        version: &quot;1&quot;
+    };
+    
+    ws.send(JSON.stringify(payload));
+    console.log(&quot;Sent payload:&quot;, payload);
+};
+
+ws.onmessage = (event) =&gt; {
+    console.log(&quot;Received message:&quot;, event.data);
+};
+
+ws.onclose = () =&gt; {
+    console.log(&quot;WebSocket connection closed&quot;);
+};
+</code></pre>
+<p><img src="installation/../assets/ws-test-js.png" alt="Websocket test in browser" /></p>
+<p>If that worked, you will notice a new deployment is running in the Edgegap dashboard, and a new Edgegap session is active.</p>
+<p>After a minute or so, the matchmaker will realise that no game client ever consumed that connect token, and delete the Edgegap session.</p>
+<p>After 10 minutes of no sessions linked to the deployment, Edgegap will stop the deployment.</p>
+<p>Feel free to manually terminate it now.</p>
+<h2 id="shall-we-play-a-game"><a class="header" href="#shall-we-play-a-game">Shall we play a game?</a></h2>
+<p>The matchmaking webservices are ready – time to connect with a game client!</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="game-client"><a class="header" href="#game-client">Game Client</a></h1>
+<p>From your checked out forked version of the <code>bevygap-spaceships</code> repo, run the game client like this by overriding the matchmaker URL to use the service you ran in the previous step:</p>
+<pre><code class="language-bash">MATCHMAKER_URL=http://localhost:3000/matchmaker/ws cargo run -p client
+</code></pre>
+<p>When you click connect:</p>
+<ul>
+<li>game makes websocket request to <code>bevygap_matchmaker_httpd</code></li>
+<li><code>bevygap_matchmaker_httpd</code> makes request to <code>bevygap_matchmaker</code> via NATS</li>
+<li><code>bevygap_matchmaker</code> sends the client IP to edgegap, creating a session</li>
+<li><code>bevygap_matchmaker</code> waits for edgegap to find a gameserver for this session. Auto-deploy may be starting one up for you.</li>
+<li>Once a gameserver is ready, <code>bevygap_matchmaker</code> will create a suitable Connect Token and respond with the token, server IP, and port.</li>
+<li><code>bevygap_matchmaker_httpd</code> will relay this to the client</li>
+<li>Client will establish connection to the gameserver, running on edgegap.</li>
+</ul>
+<p>If you got this far, find me <a href="https://discord.com/channels/691052431525675048/1189344685546811564">on Discord</a> for a <strong>high five</strong> 🙌</p>
+<blockquote>
+<p>Don't forget to support the <a href="https://bevyengine.org/foundation/">Bevy Foundation</a> with all that money your game is sure to make.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="containerizing-services"><a class="header" href="#containerizing-services">Containerizing Services</a></h1>
+<p>TODO - cover the github actions that build docker images for the matchmaker, matchmaker webservice, docker setup, traefik, etc.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="developing-your-game"><a class="header" href="#developing-your-game">Developing your Game</a></h1>
+<p>TODO - cover how to disable all the matchmaking gubbins so you can just directly connect to your local gameserver.</p>
+<p>In bevygap-spaceships I think this involves building without default features, ie no bevygap feature. need to review/test/document.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+                        <script type="text/javascript">
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+                
+    </body>
+</html>

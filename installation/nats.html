@@ -1,0 +1,321 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>NATS Server Setup - Bevygap DRAFT</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../favicon.svg">
+                        <link rel="shortcut icon" href="../favicon.png">
+                <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+                <link rel="stylesheet" href="../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../introduction.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../installation/index.html"><strong aria-hidden="true">2.</strong> Installation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../installation/nats.html" class="active"><strong aria-hidden="true">2.1.</strong> NATS Server Setup</a></li><li class="chapter-item expanded "><a href="../installation/bevygap_nats.html"><strong aria-hidden="true">2.2.</strong> Bevygap NATS Setup</a></li><li class="chapter-item expanded "><a href="../installation/edgegap.html"><strong aria-hidden="true">2.3.</strong> Edgegap Setup</a></li><li class="chapter-item expanded "><a href="../installation/matchmaker_services.html"><strong aria-hidden="true">2.4.</strong> Matchmaker Services</a></li><li class="chapter-item expanded "><a href="../installation/game_client.html"><strong aria-hidden="true">2.5.</strong> Game Client</a></li></ol></li><li class="chapter-item expanded "><a href="../containerizing/index.html"><strong aria-hidden="true">3.</strong> Containerizing Services</a></li><li class="chapter-item expanded "><a href="../development/index.html"><strong aria-hidden="true">4.</strong> Developing your Game</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Bevygap DRAFT</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="nats---what-why-and-how"><a class="header" href="#nats---what-why-and-how">NATS - what, why, and how.</a></h2>
+<p>There has to be a way to communicate between the matchmaker and the gameservers. I chose NATS, because
+it's both a message bus and a key-value store, both of which are very handy for this kind of thing.</p>
+<p>It also allows you to run the matchmaker and other components on your local dev machine if you like, connect them to the production NATS server, and test using real gameservers on edgegap. This saves the hassle of doing a full deploy during the development cycle.</p>
+<p>In fact, this tutorial starts off with deploying a public NATS server, but running all the other components locally.
+The NATS server has to be public because the gameservers (running on Edgegap) need to connect to it. Later on, we'll cover deploying the matchmaking stuff in containers on your server.</p>
+<h3 id="creating-a-self-signed-tls-certificate-for-your-nats-server"><a class="header" href="#creating-a-self-signed-tls-certificate-for-your-nats-server">Creating a self-signed TLS certificate for your NATS server</a></h3>
+<p>We'll be running NATS server using docker, and you'll need a TLS certificate for it.
+The <a href="https://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls">NATS docs on TLS</a> are extensive, but here are the edited highlights:</p>
+<h3 id="making-certifcates"><a class="header" href="#making-certifcates">Making certifcates</a></h3>
+<p>Install <a href="https://github.com/FiloSottile/mkcert">mkcert</a></p>
+<p>Find the directory where <code>mkcert</code> puts its CA certificate. On my mac, this looks like:</p>
+<pre><code class="language-bash">$ mkcert -CAROOT
+/Users/rj/Library/Application Support/mkcert
+
+# Check for the rootCA.pem file:
+$ ls &quot;/Users/rj/Library/Application Support/mkcert&quot;
+rootCA-key.pem  rootCA.pem # &lt;-- this one
+</code></pre>
+<p>Now generate a certificate for your NATS server:</p>
+<pre><code class="language-bash">$ mkcert -cert-file nats-server-cert.pem -key-file nats-server-key.pem localhost ::1 nats
+</code></pre>
+<p>Make a <code>nats-config</code> directory, and copy the server certificate and key into it:</p>
+<pre><code class="language-bash">$ mkdir nats-config
+$ mv nats-server-cert.pem nats-server-key.pem ./nats-config/
+</code></pre>
+<p>When we run the NATS server in docker, we'll ensure this <code>nats-config</code> directory is available at <code>/config</code> inside the container. With this in mind, we create a <code>nats-server.conf</code> file that references the server certificate, and creates some username/password pairs.</p>
+<p>Don't forget to create real passwords before exposing this to the internet.</p>
+<p>Create <code>nats-config/nats-server.conf</code>:</p>
+<pre><code>listen: 0.0.0.0:4222
+
+authorization: {
+    users: [
+        {user: &quot;matchmaker&quot;, password: &quot;matchmaker&quot;},
+        {user: &quot;matchmaker_httpd&quot;, password: &quot;matchmaker_httpd&quot;},
+        {user: &quot;gameserver&quot;, password: &quot;gameserver&quot;},
+    ]
+}
+
+tls {
+  cert_file: &quot;/config/nats-server-cert.pem&quot;
+  key_file:  &quot;/config/nats-server-key.pem&quot;
+}
+
+jetstream {
+    # storage directory will be mapped for you by docker:
+    store_dir: /data
+    # 100MB = high but sane limits, which we don't expect to hit:
+    max_memory_store: 104857600
+    max_file_store: 104857600
+}
+</code></pre>
+<p>For a NATS client to connect, they will need the CA cert which signed the NATS server certificate, ie the <code>rootCA.pem</code> file – to verify the server's certificate.</p>
+<p>We'll ship this file in the gameserver docker image, and make it available to the matchmaker and other services that establish NATS connections.</p>
+<blockquote>
+<p><strong>Self-signed vs Trusted CAs</strong>
+This can all be avoided if you use a certificate authority that is already trusted, such as LetsEncrypt. In my deployment, my NATS server reuses a certificate generated for my domain name by Traefik, which is already trusted by browsers and the NATS clients. No difference in 'how secure', and this tutorial will assume we use self-signed for now.</p>
+</blockquote>
+<h2 id="deploying-the-nats-server"><a class="header" href="#deploying-the-nats-server">Deploying the NATS server</a></h2>
+<p>Now you need to run a nats-server docker container on a machine that is publically accessible on the internet. Hopefully you have a cheap linux server you can use. Mine runs ubuntu. Doesn't matter, as long as you can install docker on it. The gameserver won't run here, just the nats, and matchmaking stuff (pretty lightweight).</p>
+<pre><code class="language-bash"># Connect to your remote server (which has a public IP address)
+$ ssh myserver
+</code></pre>
+<p>Make a new directory to work in:</p>
+<pre><code class="language-bash">$ mkdir nats-bits
+$ cd nats-bits
+</code></pre>
+<h4 id="configuring-the-nats-server"><a class="header" href="#configuring-the-nats-server">Configuring the NATS server</a></h4>
+<p>Create a <code>docker-compose.yaml</code> file with the following contents:</p>
+<pre><code>version: &quot;3.5&quot;
+services:
+  nats:
+    ports:
+      - &quot;4222:4222&quot;
+    image: nats:2.10.21
+    restart: unless-stopped
+    command: &quot;--config /config/nats-server.conf&quot;
+    volumes:
+      - ./nats-config:/config
+      - ./nats-data:/data
+</code></pre>
+<p>Note how the <code>volumes:</code> section maps your config directory to <code>/config</code>. An empty <code>nats-data</code> directory will be created for you automatically by docker.</p>
+<p>Into your <code>nats-bits</code> directory on the remote server, copy your <code>nats-config</code> directory you made earlier.</p>
+<p>Verify all the files are in the right place:</p>
+<pre><code class="language-bash">rj@myserver:~/nats-bits $ find .
+.
+./docker-compose.yaml
+./nats-config
+./nats-config/nats-server.conf
+./nats-config/nats-server-key.pem
+./nats-config/nats-server-cert.pem
+</code></pre>
+<h4 id="starting-the-nats-server"><a class="header" href="#starting-the-nats-server">Starting the NATS server</a></h4>
+<p>Now you can start the server:</p>
+<pre><code class="language-bash"># NB !!! older docker installs use &quot;docker-compose&quot;, newer use &quot;docker compose&quot;
+#        so if one doesn't work, try the other.
+#
+# this starts up in detached mode (in the background)
+$ docker compose up -d
+
+# Check logs, Control-C to exit:
+$ docker compose logs -f nats
+</code></pre>
+<p>You should now be able to connect to your NATS server from your local machine using the public IP address. Docker usually manages to manipulate the firewall for you, to make it work. Let's test that.</p>
+<h4 id="back-on-your-local-machine"><a class="header" href="#back-on-your-local-machine">Back on your local machine</a></h4>
+<p>Install the <a href="https://docs.nats.io/using-nats/nats-tools/nats_cli">nats-cli</a> tool, to allow you to examine the NATS bus and key-values while your system is running.</p>
+<p>Create a <a href="https://docs.nats.io/using-nats/nats-tools/nats_cli">nats context to use with <code>nats-cli</code></a>. Again, NATS docs are good, edited highlights follow:</p>
+<pre><code class="language-bash"># Change the server IP/hostname, the ca path, and the user/password to match your setup.
+nats context save \
+  --server=&quot;nats://1.2.3.4&quot; \
+  --description=&quot;My NATS server&quot; \
+  --user=&quot;matchmaker&quot; \
+  --password=&quot;matchmaker&quot; \
+  --tlsca=&quot;/Users/rj/Library/Application Support/mkcert/rootCA.pem&quot; \
+  --select \
+  bevygap
+</code></pre>
+<p>Now you can use the <code>nats</code> command to access the server:</p>
+<pre><code class="language-bash">$ nats server check connection
+OK Connection OK:connected to nats://nats.example.com:4222 in 135.609292ms OK:rtt time 25.149083ms OK:round trip took 0.025140s | connect_time=0.1356s;0.5000;1.0000 rtt=0.0251s;0.5000;1.0000 request_time=0.0251s;0.5000;1.0000
+
+</code></pre>
+<p>Congratulations! You've now got a working NATS server, which you can connect to over the internet.</p>
+<p>Consider trying the <a href="https://docs.nats.io/nats-concepts/core-nats/pubsub/pubsub_walkthrough">NATS pub/sub walkthrough</a> to get a feel for how the nats-cli tool works.</p>
+<p>Next, we configure Bevygap so it can connect to your NATS server.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../installation/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../installation/bevygap_nats.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../installation/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../installation/bevygap_nats.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        
+    </body>
+</html>
