@@ -12,7 +12,7 @@ stand-alone version of the `spaceships` example from the Lightyear repo.
 
 # Documentation / Quickstart
 
-Documentation in the `book/` directory.
+Documentation by book: [The Bevygap Book](https://rj.github.io/bevygap/)
 
 `mdbook serve -o book/` if you want to view it locally.
 
