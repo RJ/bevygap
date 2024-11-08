@@ -168,7 +168,7 @@ async fn connect_websocket(
                 }
             }
 
-            // // Handle commands from our application code
+            // Handle commands from our application code
             cmd = cmd_recv => {
                 debug!("ws cmd: {:?}", cmd);
                 match cmd {

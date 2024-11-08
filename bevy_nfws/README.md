@@ -33,7 +33,10 @@ fn connect(mut commands: Commands) {
 
 /// Poll for events on the NfwsHandle.
 fn poll(mut q: Query<(Entity, &mut NfwsHandle)>, mut commands: Commands) {
-    for (entity, mut handle) in q.iter_mut() {
+    // there's only one ws active, but you could have many:
+    let (e, mut handle) = q.single_mut();
+    // consume events until there are none, or the socket closes:
+    loop {
         match handle.next_event() {
             NfwsPollResult::Event(ev) => {
                 // New event from websocket
@@ -48,18 +51,21 @@ fn poll(mut q: Query<(Entity, &mut NfwsHandle)>, mut commands: Commands) {
                     NfwsEvent::Closed(_) => todo!(),
                 }
                 */
+                // Check again, could be more than one event ready this tick.
+                continue;
             }
             NfwsPollResult::Empty => {
                 // No new events.
-                continue;
+                break;
             }
             NfwsPollResult::Closed => {
                 info!("EV None = closed, despawning");
                 commands.entity(entity).despawn();
-                continue;
+                break;
             }
         }
     }
+
 }
 
 ```

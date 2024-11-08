@@ -110,7 +110,7 @@ fn request_token(
 fn handle_matchmaker_response(
     mut q: Query<(Entity, &mut NfwsHandle)>,
     mut commands: Commands,
-    mut lightyear_client_config: ResMut<ClientConfig>,
+    mut client_config: ResMut<ClientConfig>,
     mut next_state: ResMut<NextState<BevygapClientState>>,
     config: Res<BevygapClientConfig>,
 ) {
@@ -216,8 +216,7 @@ fn handle_matchmaker_response(
 
                                 info!("Got matchmaker response, game server: {server_addr:?}");
 
-                                if let NetConfig::Netcode { auth, io, .. } =
-                                    &mut lightyear_client_config.net
+                                if let NetConfig::Netcode { auth, io, .. } = &mut client_config.net
                                 {
                                     info!("Setting Netcode connect token and server addr");
                                     *auth = Authentication::Token(connect_token);
