@@ -1,5 +1,8 @@
 name: mdbook to github pages
 
+permissions:
+  contents: write
+
 on:
   push:
     paths:
