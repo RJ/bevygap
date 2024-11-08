@@ -5,6 +5,12 @@ authors.workspace = true
 publish.workspace = true
 edition.workspace = true
 
+[features]
+# Needed for wss:// matchmaker connections on native builds
+# Not needed on wasm!
+# Give this a thumbsup: https://github.com/rust-lang/cargo/issues/1197
+wss = ["tokio-tungstenite-wasm/rustls-tls-native-roots"]
+
 [dependencies]
 bevy.workspace = true
 tokio-tungstenite-wasm = "0.3.1"

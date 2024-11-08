@@ -5,6 +5,13 @@ authors.workspace = true
 publish.workspace = true
 edition.workspace = true
 
+[features]
+default = []
+# Needed for wss:// matchmaker connections on native builds
+# Don't enable on wasm!
+# Give this a thumbsup: https://github.com/rust-lang/cargo/issues/1197
+matchmaker-tls = ["bevy_nfws/wss"]
+
 [dependencies]
 lightyear = {workspace = true, features = ["webtransport"]}
 bevy.workspace = true

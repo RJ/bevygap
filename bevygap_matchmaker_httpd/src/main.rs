@@ -97,6 +97,7 @@ async fn main() {
     // build our application with a route
     let app = Router::new()
         .route("/", get(index_handler))
+        .route("/matchmaker", get(index_handler))
         // this probably warrants a formtoken like system or something too..
         .route("/matchmaker/wannaplay", post(wannaplay_handler))
         .route(
