@@ -9,6 +9,9 @@ to use Edgegap to spin up gameservers on demand.
 My testbed for this is [bevygap-spaceships](https://github.com/RJ/bevygap-spaceships) – a modified
 stand-alone version of the `spaceships` example from the Lightyear repo.
 
+# Live Demo
+
+Is the [live demo of bevygap-spaceships](https://game.metabrew.com/bevygap-spaceships/) working? Hopefully!
 
 # Documentation / Quickstart
 
