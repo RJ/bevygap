@@ -60,7 +60,7 @@ fn poll(mut q: Query<(Entity, &mut NfwsHandle)>, mut commands: Commands) {
             }
             NfwsPollResult::Closed => {
                 info!("EV None = closed, despawning");
-                commands.entity(entity).despawn();
+                commands.entity(e).despawn();
                 break;
             }
         }
