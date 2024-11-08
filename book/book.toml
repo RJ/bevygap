@@ -1,7 +1,0 @@
-[book]
-authors = ["RJ"]
-language = "en"
-multilingual = false
-src = "src"
-title = "Bevygap DRAFT"
-site-url = "/bevygap-book/"
