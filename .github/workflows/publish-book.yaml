@@ -22,11 +22,12 @@ jobs:
           mdbook-version: '0.4.10'
           # mdbook-version: 'latest'
 
-      - run: mdbook build -d htdocs-book book/
+      - run: mdbook build -d ../htdocs-book book/
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
           publish_dir: ./htdocs-book
