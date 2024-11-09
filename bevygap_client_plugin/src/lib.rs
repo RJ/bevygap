@@ -51,9 +51,6 @@ pub struct BevygapClientConfig {
     /// If set, the client will pass this to the matchmaker, overriding the usual client IP detection.
     /// This is passed to Edgegap when making the Session.
     pub fake_client_ip: Option<String>,
-    /// The certificate digest to use for the WebTransport connection.
-    /// Essential on wasm with self-signed certs.
-    pub certificate_digest: String,
     /// The name of the game, used in the matchmaker request.
     pub game_name: String,
     /// The version of the game, used in the matchmaker request.
@@ -65,7 +62,6 @@ impl Default for BevygapClientConfig {
         Self {
             matchmaker_url: "ws://localhost:3000/matchmaker/ws".to_string(),
             fake_client_ip: None,
-            certificate_digest: "".to_string(),
             game_name: "bevygap-spaceships".to_string(),
             game_version: "1".to_string(),
         }
@@ -96,6 +92,8 @@ fn request_token(
     config: Res<BevygapClientConfig>,
     mut commands: Commands,
 ) {
+    // TODO check if mm url is wss:// but matchmaker-tls not enabled, and on native, issue warning.
+    // TODO issue warning if mm url starts http instead of ws. MM is ws!
     info!(
         "Initiating matchmaker websocket connection: {}",
         config.matchmaker_url
