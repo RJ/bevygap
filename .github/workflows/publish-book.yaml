@@ -22,6 +22,7 @@ jobs:
           mdbook-version: '0.4.10'
           # mdbook-version: 'latest'
 
+      # care: the -d path is relative to the book source directory.
       - run: mdbook build -d ../htdocs-book book/
 
       - name: Deploy

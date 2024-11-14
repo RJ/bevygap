@@ -77,13 +77,14 @@ Port 6420 is the port that `bevygap-spaceships` listens on. (ie: `0.0.0.0:6420`)
 
 ### Add Environment Variables
 
-Set the env vars that bevygap needs to connect to NATS:
+Set the env vars that bevygap needs to connect to NATS, and the lightyear key:
 
-| Name          | Value      | Notes                      |
-| ------------- | ---------- | -------------------------- |
-| NATS_USER     | gameserver | from your nats-server.conf |
-| NATS_PASSWORD | gameserver | from your nats-server.conf |
-| NATS_HOST     | 1.2.3.4    | Your NATS server public IP |
+| Name                 | Value                     | Notes                      |
+| -------------------- | ------------------------- | -------------------------- |
+| NATS_USER            | gameserver                | from your nats-server.conf |
+| NATS_PASSWORD        | gameserver                | from your nats-server.conf |
+| NATS_HOST            | 1.2.3.4                   | Your NATS server public IP |
+| LIGHYEAR_PRIVATE_KEY | [1, 2, 3, 4, 5, 6, ... 1] | From the game source       |
 
 
 #### Providing the rootCA.pem file to the gameserver container
