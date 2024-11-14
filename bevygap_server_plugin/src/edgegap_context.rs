@@ -82,9 +82,13 @@ async fn fetch_context_from_api(
 
 pub fn fetch_context_on_nats_connected(
     _trigger: Trigger<crate::plugin::NatsConnected>,
-    runtime: ResMut<TokioTasksRuntime>,
+    runtime: Option<ResMut<TokioTasksRuntime>>,
     arb_env: Res<ArbitriumEnv>,
 ) {
+    // res not available, runtime error. tokio tasks plugin not inserted yet?
+    let Some(runtime) = runtime else {
+        return;
+    };
     let context_url = arb_env.context_url.clone();
     let context_token = arb_env.context_token.clone();
     info!("Fetching context: {context_url} ::::  {context_token}");
