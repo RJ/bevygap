@@ -397,11 +397,12 @@ docker images to Edgegap's container registry.</p>
 </tbody></table>
 <p>Port 6420 is the port that <code>bevygap-spaceships</code> listens on. (ie: <code>0.0.0.0:6420</code>)</p>
 <h3 id="add-environment-variables"><a class="header" href="#add-environment-variables">Add Environment Variables</a></h3>
-<p>Set the env vars that bevygap needs to connect to NATS:</p>
+<p>Set the env vars that bevygap needs to connect to NATS, and the lightyear key:</p>
 <table><thead><tr><th>Name</th><th>Value</th><th>Notes</th></tr></thead><tbody>
 <tr><td>NATS_USER</td><td>gameserver</td><td>from your nats-server.conf</td></tr>
 <tr><td>NATS_PASSWORD</td><td>gameserver</td><td>from your nats-server.conf</td></tr>
 <tr><td>NATS_HOST</td><td>1.2.3.4</td><td>Your NATS server public IP</td></tr>
+<tr><td>LIGHYEAR_PRIVATE_KEY</td><td>[1, 2, 3, 4, 5, 6, ... 1]</td><td>From the game source</td></tr>
 </tbody></table>
 <h4 id="providing-the-rootcapem-file-to-the-gameserver-container"><a class="header" href="#providing-the-rootcapem-file-to-the-gameserver-container">Providing the rootCA.pem file to the gameserver container</a></h4>
 <p>If you're using a self-signed certificate for your NATS server, you need to provide the CA root certificate to the gameserver, otherwise it won't be able to verify the NATS server's certificate.</p>
