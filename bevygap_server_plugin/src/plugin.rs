@@ -39,7 +39,9 @@ pub struct BevygapReady;
 
 impl Plugin for BevygapServerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(TokioTasksPlugin::default());
+        if !app.is_plugin_added::<TokioTasksPlugin>() {
+            app.add_plugins(TokioTasksPlugin::default());
+        }
         // Load the Edgegap ENVs
         let arb_env = if self.mock_env {
             info!("Reading MOCK Arbitrium ENVs");
@@ -188,6 +190,16 @@ impl NatsSender {
     }
 }
 
+/// Exists purely to allow us to trigger an event via command queue
+/// see setup_nats() below.
+struct DeferredTriggerCommand<T>(T);
+
+impl<T: Event> bevy::ecs::world::Command for DeferredTriggerCommand<T> {
+    fn apply(self, world: &mut World) {
+        world.trigger(self.0);
+    }
+}
+
 fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
     info!("Setting up NATS");
 
@@ -220,7 +232,17 @@ fn setup_nats(runtime: ResMut<TokioTasksRuntime>, mut commands: Commands) {
 
         ctx.run_on_main_thread(move |ctx| {
             ctx.world.insert_resource(bgnats);
-            ctx.world.trigger(NatsConnected);
+            // main thread work is executed by TokioTasks plugin by removing the TokioTasksRuntime resource,
+            // doing the work, then reinserting the resource.
+            // if we use a trigger here, the observer will fire instantly, and run while the TokioTasksRuntime is not present in the world.
+            // unfortunately, our observer requests the TokioTasksRuntime resource, and panics if it's not present.
+            //
+            // so we have to defer the trigger, by using a Command queue.
+            // instead of:
+            // ctx.world.trigger(NatsConnected);
+            // we do:
+            ctx.world.commands().push(DeferredTriggerCommand(NatsConnected));
+            // so the actual triggering happens after the TokioTasksRuntime resource is reinserted into the world.
         })
         .await;
 
