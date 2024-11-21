@@ -47,7 +47,9 @@ async fn delete_session_worker(state: &MatchmakerState) -> Result<(), async_nats
                     match resp_content.status.as_u16() {
                         404 => {
                             // session already deleted or never existed.
-                            warn!("session_delete 404: {session_id}");
+                            warn!(
+                                "session_delete 404: {session_id} - already deleted or not found?"
+                            );
                             message.ack().await?;
                         }
                         410 => {

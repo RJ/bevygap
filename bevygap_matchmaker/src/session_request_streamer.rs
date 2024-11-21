@@ -289,9 +289,14 @@ pub(crate) async fn streaming_session_request_handler(
     state: &MatchmakerState,
 ) -> Result<(), async_nats::Error> {
     let client = state.nats_client().clone();
-    info!("Listening for session requests on 'matchmaker.request'");
 
-    let mut sub = client.subscribe("matchmaker.request.>").await?;
+    let subject = format!(
+        "matchmaker.request.{}.{}",
+        state.settings.app_name, state.settings.app_version
+    );
+    info!("Listening for session requests on '{subject}'");
+
+    let mut sub = client.subscribe(subject).await?;
 
     while let Some(message) = sub.next().await {
         info!("Matchmaking request on {}", message.subject);

@@ -139,7 +139,7 @@ async fn main() -> Result<(), async_nats::Error> {
         lypkey,
     };
 
-    // ensure the specified app, version, and deployment are valid and ready for players.
+    // ensure the specified app and version are valid and ready for players.
     verify_application(&mm_state).await?;
 
     let state = mm_state.clone();
