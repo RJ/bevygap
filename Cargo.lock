@@ -2201,11 +2201,12 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
-version = "5.5.3"
+version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
+checksum = "5041cc499144891f3790297212f32a74fb938e5136a14943f338ef9e0ae276cf"
 dependencies = [
  "cfg-if",
+ "crossbeam-utils",
  "hashbrown 0.14.5",
  "lock_api",
  "once_cell",
@@ -2862,14 +2863,15 @@ dependencies = [
 
 [[package]]
 name = "governor"
-version = "0.6.3"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68a7f542ee6b35af73b06abc0dad1c1bae89964e4e253bc4b587b91c9637867b"
+checksum = "0746aa765db78b521451ef74221663b57ba595bf83f75d0ce23cc09447c8139f"
 dependencies = [
  "cfg-if",
  "dashmap",
- "futures",
+ "futures-sink",
  "futures-timer",
+ "futures-util",
  "no-std-compat",
  "nonzero_ext",
  "parking_lot",
@@ -3565,7 +3567,7 @@ dependencies = [
 [[package]]
 name = "lightyear"
 version = "0.17.0"
-source = "git+https://github.com/cBournhonesque/lightyear.git?rev=0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98#0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98"
+source = "git+https://github.com/cBournhonesque/lightyear.git?rev=59b089c41e57911653c8d0fe891db86bca50142d#59b089c41e57911653c8d0fe891db86bca50142d"
 dependencies = [
  "async-channel 2.3.1",
  "async-compat",
@@ -3589,7 +3591,6 @@ dependencies = [
  "parking_lot",
  "paste",
  "rand",
- "ring 0.17.8",
  "ringbuffer",
  "seahash",
  "self_cell",
@@ -3609,7 +3610,7 @@ dependencies = [
 [[package]]
 name = "lightyear_macros"
 version = "0.17.0"
-source = "git+https://github.com/cBournhonesque/lightyear.git?rev=0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98#0b7a4852fbb2eb9848d2fbc04dd4eea70d51ea98"
+source = "git+https://github.com/cBournhonesque/lightyear.git?rev=59b089c41e57911653c8d0fe891db86bca50142d#59b089c41e57911653c8d0fe891db86bca50142d"
 dependencies = [
  "proc-macro2",
  "quote",
