@@ -58,7 +58,7 @@ tokio-tungstenite = "0.23"
 clap = { version = "4.4", features = ["derive"] }
 # YOU MUST USE SAME LY VER AS GAME
 # Otherwise resources from lightyear won't be found.
-lightyear = {git = "https://github.com/cBournhonesque/lightyear.git", rev = "59b089c41e57911653c8d0fe891db86bca50142d", default-features = false}
+lightyear = {git = "https://github.com/cBournhonesque/lightyear.git", rev = "5845699d02ee953b73fa6f341224fe0df9dfa12b", default-features = false}
 time = {version = "0.3.36", features = ["std"]}
 base64 = "0.22"
 edgegap = {path = "./edgegap-client"}
