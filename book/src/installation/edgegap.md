@@ -29,12 +29,12 @@ docker images to Edgegap's container registry.
 
 On Github, go to the `Settings / Secrets and variables / Actions` page of your newly forked bevygap-spaceships repo, and add these secrets:
 
-  | Secret Name             | Example value                                   |
-  | ----------------------- | ----------------------------------------------- |
-  | EDGEGAP_IMAGE_NAME      | metabrew-kfk5fha5fsct/bevygap-spaceships-server |
-  | EDGEGAP_DOCKER_REGISTRY | registry.edgegap.com                            |
-  | EDGEGAP_DOCKER_USERNAME | robot$metabrew-kfk5fha5fsct+client-push         |
-  | EDGEGAP_DOCKER_PASSWORD | ....password from edgegap dashboard...          |
+| Secret Name             | Example value                                   |
+| ----------------------- | ----------------------------------------------- |
+| EDGEGAP_IMAGE_NAME      | metabrew-kfk5fha5fsct/bevygap-spaceships-server |
+| EDGEGAP_DOCKER_REGISTRY | registry.edgegap.com                            |
+| EDGEGAP_DOCKER_USERNAME | robot$metabrew-kfk5fha5fsct+client-push         |
+| EDGEGAP_DOCKER_PASSWORD | ....password from edgegap dashboard...          |
 
 ### Building the gameserver
 
