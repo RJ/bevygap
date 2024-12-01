@@ -365,12 +365,12 @@ This is the Lightyear &quot;spaceships&quot; example game, modified to run as a 
 <p>Visit the &quot;Container Registry&quot; page on the Edgegap dashboard, to see the credentials you need to push
 docker images to Edgegap's container registry.</p>
 <p>On Github, go to the <code>Settings / Secrets and variables / Actions</code> page of your newly forked bevygap-spaceships repo, and add these secrets:</p>
-<p>| Secret Name             | Example value                                   |
-| ----------------------- | ----------------------------------------------- |
-| EDGEGAP_IMAGE_NAME      | metabrew-kfk5fha5fsct/bevygap-spaceships-server |
-| EDGEGAP_DOCKER_REGISTRY | registry.edgegap.com                            |
-| EDGEGAP_DOCKER_USERNAME | robot$metabrew-kfk5fha5fsct+client-push         |
-| EDGEGAP_DOCKER_PASSWORD | ....password from edgegap dashboard...          |</p>
+<table><thead><tr><th>Secret Name</th><th>Example value</th></tr></thead><tbody>
+<tr><td>EDGEGAP_IMAGE_NAME</td><td>metabrew-kfk5fha5fsct/bevygap-spaceships-server</td></tr>
+<tr><td>EDGEGAP_DOCKER_REGISTRY</td><td>registry.edgegap.com</td></tr>
+<tr><td>EDGEGAP_DOCKER_USERNAME</td><td>robot$metabrew-kfk5fha5fsct+client-push</td></tr>
+<tr><td>EDGEGAP_DOCKER_PASSWORD</td><td>....password from edgegap dashboard...</td></tr>
+</tbody></table>
 <h3 id="building-the-gameserver"><a class="header" href="#building-the-gameserver">Building the gameserver</a></h3>
 <p>To trigger the github action that builds the gameserver docker image and publishes it to Edgegap's container registry, either commit a new git tag, or visit the &quot;Actions&quot; page of the repo, select the &quot;Build server&quot; action, and click &quot;Run workflow&quot;. Enter a version like <code>v1.0.0</code>.</p>
 <p>At the time of writing, this was taking between 10 and 15 minutes to complete. This time can probably be reduced with some docker/github/caching trickery.</p>
