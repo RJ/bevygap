@@ -4,6 +4,7 @@ use bevy_tokio_tasks::{TokioTasksPlugin, TokioTasksRuntime};
 use bevygap_shared::nats::*;
 use lightyear::connection::netcode::ClientId;
 use lightyear::connection::server::{ConnectionRequestHandler, DeniedReason};
+use lightyear::prelude::server::*;
 use lightyear::server::events::{ConnectEvent, DisconnectEvent};
 use std::sync::Arc;
 
@@ -11,22 +12,7 @@ use crate::arbitrium_env::ArbitriumEnv;
 use crate::edgegap_context::{self, ArbitriumContext};
 
 /// Plugin for gameservers that run on edgegap.
-#[derive(Default)]
-pub struct BevygapServerPlugin {
-    /// if true, use mock envs instead of reading Arbitrium ones.
-    pub mock_env: bool,
-    /// Certificate digest, for self-signed certs
-    pub cert_digest: String,
-}
-
-impl BevygapServerPlugin {
-    pub fn self_signed_digest(cert_digest: String) -> Self {
-        Self {
-            cert_digest,
-            ..Default::default()
-        }
-    }
-}
+pub struct BevygapServerPlugin;
 
 #[derive(Resource)]
 struct CertDigest(String);
@@ -43,16 +29,9 @@ impl Plugin for BevygapServerPlugin {
             app.add_plugins(TokioTasksPlugin::default());
         }
         // Load the Edgegap ENVs
-        let arb_env = if self.mock_env {
-            info!("Reading MOCK Arbitrium ENVs");
-            ArbitriumEnv::from_example()
-        } else {
-            info!("Reading Arbitrium ENVs");
-            ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs")
-        };
+        info!("Reading Arbitrium ENVs");
+        let arb_env = ArbitriumEnv::from_env().expect("Failed to read Arbitrium ENVs");
         app.insert_resource(arb_env);
-
-        app.insert_resource(CertDigest(self.cert_digest.clone()));
 
         // When using a self-signed cert for your NATS server, the server needs the root CA .pem file
         // in order to verify the server's certificate. Since this file is around 2kB, and Edgegap
@@ -62,7 +41,7 @@ impl Plugin for BevygapServerPlugin {
         // In future, we hope to just set this ENV var directly in the Edgegap Dashboard.
         inject_ca_root_env_var_from_cmdline_arg();
 
-        app.add_systems(Startup, setup_nats);
+        app.add_systems(Startup, (extract_cert_digest, setup_nats).chain());
 
         app.observe(edgegap_context::fetch_context_on_nats_connected);
         app.observe(send_context_to_nats);
@@ -71,6 +50,32 @@ impl Plugin for BevygapServerPlugin {
         app.observe(handle_lightyear_client_connect);
         app.observe(handle_lightyear_client_disconnect);
     }
+}
+
+#[allow(unreachable_patterns)]
+fn extract_cert_digest(
+    server_config: Res<lightyear::server::config::ServerConfig>,
+    mut commands: Commands,
+) {
+    let net_config = &server_config.net[0];
+    let digest = match &net_config {
+        NetConfig::Netcode { io, .. } => match &io.transport {
+            ServerTransport::WebTransportServer { certificate, .. } => Some(
+                certificate.certificate_chain().as_slice()[0]
+                    .hash()
+                    .to_string(),
+            ),
+            _ => None,
+        },
+        _ => None,
+    };
+    let Some(digest) = digest else {
+        panic!(
+            "Unable to extract cert digest. Is there a webtransport server transport configured?"
+        );
+    };
+    info!("Extracted cert digest: {}", digest);
+    commands.insert_resource(CertDigest(digest));
 }
 
 /// If --ca_contents XXXXXX present on command line, set NATS_CA_CONTENTS to XXXXXX

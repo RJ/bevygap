@@ -36,39 +36,6 @@ impl ArbitriumEnv {
         })
     }
 
-    /// Populates the fields with example values from the comments.
-    pub fn from_example() -> Self {
-        Self {
-            request_id: "f68e011bfb01".to_string(),
-            delete_url: "https://api.edgegap.com/v1/self/stop/9f511e17/660".to_string(),
-            delete_token: "7df4cd933df87084b34ae80d8abde293".to_string(),
-            deployment_location: r#"{
-                "city": "Montreal",
-                "country": "Canada",
-                "continent": "North America",
-                "administrative_division": "Quebec",
-                "timezone": "Eastern Time",
-                "latitude": 45.513707,
-                "longitude": -73.619073
-            }"#
-            .to_string(),
-            context_url: "https://api.edgegap.com/v1/context/9170f5211e17/17".to_string(),
-            context_token: "dfaf50b9333b9ee07b22ed247e4a17e6".to_string(),
-            public_ip: "162.254.141.66".to_string(),
-            ports_mapping: r#"{
-                "ports": {
-                    "5000": {
-                        "name": "game_port",
-                        "internal": 5000,
-                        "external": 31500,
-                        "protocol": "HTTP"
-                    }
-                }
-            }"#
-            .to_string(),
-        }
-    }
-
     /// Returns a tuple containing the request_id and security_number extracted from the context_url.
     /// The security_number is parsed as an i32.
     pub fn context_parts(&self) -> Option<(String, i32)> {
