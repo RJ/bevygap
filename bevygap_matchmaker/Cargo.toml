@@ -6,7 +6,7 @@ authors.workspace = true
 publish.workspace = true
 
 [dependencies]
-bevygap_shared = {workspace = true, features = ["nats"]}
+bevygap_shared = { workspace = true, features = ["nats"] }
 futures.workspace = true
 futures-util.workspace = true
 tokio.workspace = true

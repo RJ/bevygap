@@ -13,7 +13,7 @@ default = []
 matchmaker-tls = ["bevy_nfws/wss"]
 
 [dependencies]
-lightyear = {workspace = true, features = ["webtransport"]}
+lightyear = { workspace = true, features = ["webtransport"] }
 bevy.workspace = true
 base64.workspace = true
 bevy_nfws.workspace = true
@@ -21,7 +21,7 @@ serde_json.workspace = true
 bevygap_shared.workspace = true
 
 [dev-dependencies]
-bevy = {workspace = true, default-features = true}
+bevy = { workspace = true, default-features = true }
 
 [lints]
 workspace = true
