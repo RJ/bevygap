@@ -200,6 +200,5 @@ async fn connect_websocket(
             }
         }
     }
-    debug!("ws async loop ending.");
     Ok(())
 }
