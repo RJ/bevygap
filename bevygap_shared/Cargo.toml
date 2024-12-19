@@ -4,7 +4,9 @@ version.workspace = true
 authors.workspace = true
 publish = true
 edition.workspace = true
-
+license.workspace = true
+description = "Shared plugin used by bevygap plugins and related tools"
+homepage.workspace = true
 [features]
 default = ["nats"]
 nats = ["dep:async-nats"]

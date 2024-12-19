@@ -3,9 +3,10 @@ name = "bevygap_server_plugin"
 edition = "2021"
 version.workspace = true
 authors.workspace = true
-publish.workspace = true
+publish = true
 license.workspace = true
 description = "Plugin for bevy gameservers for use with lightyear on edgegap"
+homepage.workspace = true
 
 [dependencies]
 bevygap_shared = { workspace = true, features = ["nats", "bevy"] }

@@ -6,6 +6,7 @@ publish = true
 edition.workspace = true
 license.workspace = true
 description = "Plugin for bevy games for use with bevygap matchmaker and lightyear"
+homepage.workspace = true
 
 [features]
 default = []
