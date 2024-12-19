@@ -16,6 +16,7 @@ version = "0.2.3"
 authors = ["RJ <rj@metabrew.com>"]
 publish = false
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 # optimisation notes: https://bevy-cheatbook.github.io/pitfalls/performance.html
 

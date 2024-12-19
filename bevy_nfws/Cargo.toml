@@ -4,6 +4,8 @@ version = "0.1.0"
 authors.workspace = true
 publish = true
 edition.workspace = true
+license.workspace = true
+description = "A no-frills websocket client library for bevy, native and wasm."
 
 [features]
 # Needed for wss:// matchmaker connections on native builds
