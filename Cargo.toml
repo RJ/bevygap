@@ -12,7 +12,7 @@ resolver = "2"
 
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.3"
 authors = ["RJ <rj@metabrew.com>"]
 publish = false
 edition = "2021"
@@ -67,7 +67,7 @@ reqwest = { version = "^0.12", features = ["json", "multipart"] }
 http-body-util = "0.1.0"
 tower-http = {version = "0.6.1", default-features = false, features = ["cors"]}
 regex = "1.11.1"
-bevy_nfws = {path = "./bevy_nfws"}
+bevy_nfws = {path = "./bevy_nfws", version = "0.1.0"}
 bevygap_shared = {path = "./bevygap_shared", default-features = false}
 async-channel = "2.3"
 

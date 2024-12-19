@@ -1,8 +1,10 @@
 # Bevygap Client Plugin
 
 Instead of connecting lightyear using `commands.connect_client()`, this plugin will
-make a request to the matchmaker, then modify lightyear's config to set the supplied
+make a request to the [bevygap matchmaker](https://github.com/RJ/bevygap), then modify lightyear's config to set the supplied
 game server socket address and connect token, then call `commands.connect_client()` for you.
+
+Read the [bevygap book](https://rj.github.io/bevygap/) to learn more.
 
 ## Usage
 

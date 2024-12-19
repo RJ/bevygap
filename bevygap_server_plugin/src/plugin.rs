@@ -12,6 +12,9 @@ use crate::arbitrium_env::ArbitriumEnv;
 use crate::edgegap_context::{self, ArbitriumContext};
 
 /// Plugin for gameservers that run on edgegap.
+/// TODO We need to know if the cert is self signed or not - if so, we can extract the cert digest
+/// and tell the browser to use it.
+/// If not, and it's a trusted cert, do nothing.
 pub struct BevygapServerPlugin;
 
 #[derive(Resource)]

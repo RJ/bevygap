@@ -2,7 +2,7 @@
 name = "bevygap_shared"
 version.workspace = true
 authors.workspace = true
-publish.workspace = true
+publish = true
 edition.workspace = true
 
 [features]
