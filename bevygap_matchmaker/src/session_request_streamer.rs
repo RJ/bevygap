@@ -3,7 +3,7 @@ use async_nats::error::Error as NatsError;
 use async_nats::{Client, Subject};
 use base64::prelude::*;
 use bevygap_shared::protocol::*;
-use edgegap::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
+use edgegap_async::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
 use futures::StreamExt;
 use lightyear::prelude::ConnectToken;
 use log::*;
@@ -335,7 +335,7 @@ pub(crate) async fn streaming_session_request_handler(
                         .send(SessionRequestFeedback::Error(err_code, err_msg))
                         .await;
                 }
-                Err(MyError::Edgegap(edgegap::apis::Error::ResponseError(e))) => {
+                Err(MyError::Edgegap(edgegap_async::apis::Error::ResponseError(e))) => {
                     let (err_code, err_msg) = match e.entity {
                         Some(SessionPostError::Status400(ee)) => (400, ee.message),
                         Some(SessionPostError::Status401(ee)) => (401, ee.message),

@@ -1,7 +1,7 @@
 use crate::MatchmakerState;
 use async_nats::service::ServiceExt;
 use base64::prelude::*;
-use edgegap::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
+use edgegap_async::{apis::sessions_api::*, apis::Error as EdgegapError, models::SessionModel};
 use futures::StreamExt;
 use lightyear::prelude::ConnectToken;
 use log::*;
@@ -94,7 +94,7 @@ async fn session_request_handler(state: &MatchmakerState) -> Result<(), async_na
                             .unwrap();
                     }
 
-                    Err(edgegap::apis::Error::ResponseError(e)) => {
+                    Err(edgegap_async::apis::Error::ResponseError(e)) => {
                         error!("edgegap api error: {:?}", e);
                         let (err_code, err_msg) = match e.entity {
                             Some(SessionPostError::Status400(ee)) => (400, ee.message),
@@ -248,7 +248,7 @@ async fn session_responder(
     let deployment = session_get.deployment.expect("deployment not found");
 
     let Some(ports) = deployment.ports else {
-        return Err(edgegap::apis::Error::Io(std::io::Error::new(
+        return Err(edgegap_async::apis::Error::Io(std::io::Error::new(
             std::io::ErrorKind::Other,
             "No ports found in deployment!",
         )));

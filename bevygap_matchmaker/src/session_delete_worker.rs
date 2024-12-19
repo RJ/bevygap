@@ -1,6 +1,6 @@
 use crate::MatchmakerState;
 use async_nats::jetstream::{self};
-use edgegap::apis::sessions_api::*;
+use edgegap_async::apis::sessions_api::*;
 use futures::StreamExt;
 use log::*;
 
@@ -43,7 +43,7 @@ async fn delete_session_worker(state: &MatchmakerState) -> Result<(), async_nats
                     info!("session_delete ok: {:?}", session_delete_response);
                     message.ack().await?;
                 }
-                Err(edgegap::apis::Error::ResponseError(resp_content)) => {
+                Err(edgegap_async::apis::Error::ResponseError(resp_content)) => {
                     match resp_content.status.as_u16() {
                         404 => {
                             // session already deleted or never existed.
